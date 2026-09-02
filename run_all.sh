@@ -143,6 +143,21 @@ write_json netlist/register_file.json;
 
 echo ""
 echo "========================================"
+echo " RV32I CORE SYNTHESIS"
+echo "========================================"
+
+yosys -Q -l reports/rv32i_core.log -p "
+read_verilog design/RV32I/rv32i_core.v design/register_file.v;
+hierarchy -check -top rv32i_core;
+synth_xilinx -family xc7 -top rv32i_core;
+stat;
+ltp;
+write_json netlist/rv32i_core.json;
+"
+
+
+echo ""
+echo "========================================"
 echo " ALL SYNTHESIS COMPLETED"
 echo "========================================"
 echo ""
@@ -156,4 +171,5 @@ echo "reports/left_rotator.log"
 echo "reports/left_shifter_variable.log"
 echo "reports/left_rotator_variable.log"
 echo "reports/register_file.log"
+echo "reports/rv32i_core.log"
 echo ""

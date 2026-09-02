@@ -2,6 +2,9 @@
 *.vcd
 *.history
 *.out
+*.o
+*.bin
+*.elf
 *.log
 *.pdf
 *.dot
