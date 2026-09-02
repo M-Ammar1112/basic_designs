@@ -71,13 +71,13 @@ echo "========================================"
 echo " LEFT SHIFTER SYNTHESIS"
 echo "========================================"
 
-yosys -Q -l reports/left_shifter_8bit.log -p "
-read_verilog design/left_shifter_8bit.v;
-hierarchy -check -top left_shifter_8bit;
-synth_xilinx -family xc7 -top left_shifter_8bit;
+yosys -Q -l reports/left_shifter.log -p "
+read_verilog design/left_shifter.v;
+hierarchy -check -top left_shifter;
+synth_xilinx -family xc7 -top left_shifter;
 stat;
 ltp;
-write_json netlist/left_shifter_8bit.json;
+write_json netlist/left_shifter.json;
 "
 
 
@@ -86,13 +86,13 @@ echo "========================================"
 echo " LEFT ROTATOR SYNTHESIS"
 echo "========================================"
 
-yosys -Q -l reports/left_rotator_8bit.log -p "
-read_verilog design/left_rotator_8bit.v;
-hierarchy -check -top left_rotator_8bit;
-synth_xilinx -family xc7 -top left_rotator_8bit;
+yosys -Q -l reports/left_rotator.log -p "
+read_verilog design/left_rotator.v;
+hierarchy -check -top left_rotator;
+synth_xilinx -family xc7 -top left_rotator;
 stat;
 ltp;
-write_json netlist/left_rotator_8bit.json;
+write_json netlist/left_rotator.json;
 "
 
 
@@ -101,13 +101,13 @@ echo "========================================"
 echo " VARIABLE LEFT SHIFTER SYNTHESIS"
 echo "========================================"
 
-yosys -Q -l reports/left_shifter_variable_8bit.log -p "
-read_verilog design/left_shifter_variable_8bit.v;
-hierarchy -check -top left_shifter_variable_8bit;
-synth_xilinx -family xc7 -top left_shifter_variable_8bit;
+yosys -Q -l reports/left_shifter_variable.log -p "
+read_verilog design/left_shifter_variable.v;
+hierarchy -check -top left_shifter_variable;
+synth_xilinx -family xc7 -top left_shifter_variable;
 stat;
 ltp;
-write_json netlist/left_shifter_variable_8bit.json;
+write_json netlist/left_shifter_variable.json;
 "
 
 
@@ -116,13 +116,13 @@ echo "========================================"
 echo " VARIABLE LEFT ROTATOR SYNTHESIS"
 echo "========================================"
 
-yosys -Q -l reports/left_rotator_variable_8bit.log -p "
-read_verilog design/left_rotator_variable_8bit.v;
-hierarchy -check -top left_rotator_variable_8bit;
-synth_xilinx -family xc7 -top left_rotator_variable_8bit;
+yosys -Q -l reports/left_rotator_variable.log -p "
+read_verilog design/left_rotator_variable.v;
+hierarchy -check -top left_rotator_variable;
+synth_xilinx -family xc7 -top left_rotator_variable;
 stat;
 ltp;
-write_json netlist/left_rotator_variable_8bit.json;
+write_json netlist/left_rotator_variable.json;
 "
 
 
@@ -136,8 +136,8 @@ echo "reports/add4_cascade.log"
 echo "reports/add4_balanced.log"
 echo "reports/max3_cascade.log"
 echo "reports/max3_balanced.log"
-echo "reports/left_shifter_8bit.log"
-echo "reports/left_rotator_8bit.log"
-echo "reports/left_shifter_variable_8bit.log"
-echo "reports/left_rotator_variable_8bit.log"
+echo "reports/left_shifter.log"
+echo "reports/left_rotator.log"
+echo "reports/left_shifter_variable.log"
+echo "reports/left_rotator_variable.log"
 echo ""

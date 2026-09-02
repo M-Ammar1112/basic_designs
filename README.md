@@ -12,10 +12,10 @@ The current synthesis flow targets Yosys with Xilinx 7-series technology mapping
 | Four-input adder | `add4_cascade` | Adds four 8-bit unsigned inputs through a cascaded adder structure. |
 | Three-input maximum | `max3_balanced` | Selects the maximum of three 8-bit unsigned inputs using a balanced comparison structure. |
 | Three-input maximum | `max3_cascade` | Selects the maximum of three 8-bit unsigned inputs through cascaded comparisons. |
-| Eight-bit left shifter | `left_shifter_8bit` | Shifts the input left by one bit and inserts zero at bit 0. |
-| Eight-bit left rotator | `left_rotator_8bit` | Rotates the input left by one bit and moves bit 7 to bit 0. |
-| Variable eight-bit left shifter | `left_shifter_variable_8bit` | Shifts the input left by the unsigned 3-bit `shamt` value and inserts zeros at bit 0. |
-| Variable eight-bit left rotator | `left_rotator_variable_8bit` | Rotates the input left by the unsigned 3-bit `shamt` value. |
+| Eight-bit left shifter | `left_shifter` | Shifts the input left by one bit and inserts zero at bit 0. |
+| Eight-bit left rotator | `left_rotator` | Rotates the input left by one bit and moves bit 7 to bit 0. |
+| Variable eight-bit left shifter | `left_shifter_variable` | Shifts the input left by the unsigned 3-bit `shamt` value and inserts zeros at bit 0. |
+| Variable eight-bit left rotator | `left_rotator_variable` | Rotates the input left by the unsigned 3-bit `shamt` value. |
 
 The two implementations of each adder and maximum function provide a simple basis for comparing RTL structure, synthesized logic, timing, and resource usage. The shifter and rotator designs demonstrate common fixed-width bit-manipulation building blocks.
 
@@ -71,7 +71,7 @@ View the RTL schematic for any standalone design with `xdot`:
 
 ```bash
 make schematic DESIGN=add4_balanced
-make schematic DESIGN=left_rotator_8bit
+make schematic DESIGN=left_rotator
 ```
 
 The `DESIGN` value must match a Verilog filename in `design/` without the `.v` extension. The default is `add4_balanced`. The generated DOT file is temporary and ignored by Git.

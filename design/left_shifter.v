@@ -1,4 +1,4 @@
-module left_shifter_8bit (
+module left_shifter (
     input  [7:0] data_in,
     output [7:0] data_out
 );

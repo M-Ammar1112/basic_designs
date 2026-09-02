@@ -77,26 +77,26 @@ module tb_compare;
     );
 
 
-    left_shifter_8bit uut_left_shifter (
+    left_shifter uut_left_shifter (
         .data_in(a),
         .data_out(shifted)
     );
 
 
-    left_rotator_8bit uut_left_rotator (
+    left_rotator uut_left_rotator (
         .data_in(a),
         .data_out(rotated)
     );
 
 
-    left_shifter_variable_8bit uut_left_shifter_variable (
+    left_shifter_variable uut_left_shifter_variable (
         .data_in(a),
         .shamt(shamt),
         .data_out(variable_shifted)
     );
 
 
-    left_rotator_variable_8bit uut_left_rotator_variable (
+    left_rotator_variable uut_left_rotator_variable (
         .data_in(a),
         .shamt(shamt),
         .data_out(variable_rotated)

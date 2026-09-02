@@ -1,4 +1,4 @@
-module left_rotator_8bit (
+module left_rotator (
     input  [7:0] data_in,
     output [7:0] data_out
 );
