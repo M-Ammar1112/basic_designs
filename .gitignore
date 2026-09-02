@@ -1,5 +1,6 @@
 # Simulation waveforms and generated output
 *.vcd
+*.history
 *.out
 *.log
 *.pdf
