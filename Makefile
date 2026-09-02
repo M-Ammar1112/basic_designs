@@ -32,7 +32,7 @@ synth:
 	./run_all.sh
 
 clean:
-	rm -f $(SIM) waveform.vcd
+	rm -f $(SIM) waveform.vcd abc.history tb.out
 
 distclean: clean
 	rm -rf netlist reports
