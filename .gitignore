@@ -1,0 +1,9 @@
+# Simulation waveforms and generated output
+*.vcd
+*.out
+*.log
+*.pdf
+
+# Generated netlists and reports
+/netlist/
+/reports/
