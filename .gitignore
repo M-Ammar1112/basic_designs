@@ -4,6 +4,7 @@
 *.out
 *.log
 *.pdf
+*.dot
 
 # Generated netlists and reports
 /netlist/

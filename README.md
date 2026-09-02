@@ -31,6 +31,7 @@ reports/      Generated synthesis reports, ignored by Git
 ## Requirements
 
 - Yosys
+- `xdot` and Graphviz for schematic viewing
 - Icarus Verilog and its `vvp` runtime
 - GNU Make
 - A shell environment capable of running the synthesis script
@@ -59,6 +60,17 @@ make synth
 ```
 
 The script synthesizes each current top-level module and writes JSON netlists to `netlist/` and synthesis logs to `reports/`. These directories are generated artifacts and are intentionally not tracked in Git.
+
+## Schematic Viewing
+
+View the RTL schematic for any standalone design with `xdot`:
+
+```bash
+make schematic DESIGN=add4_balanced
+make schematic DESIGN=left_rotator_8bit
+```
+
+The `DESIGN` value must match a Verilog filename in `design/` without the `.v` extension. The default is `add4_balanced`. The generated DOT file is temporary and ignored by Git.
 
 ## Common Commands
 
