@@ -98,6 +98,36 @@ write_json netlist/left_rotator_8bit.json;
 
 echo ""
 echo "========================================"
+echo " VARIABLE LEFT SHIFTER SYNTHESIS"
+echo "========================================"
+
+yosys -Q -l reports/left_shifter_variable_8bit.log -p "
+read_verilog design/left_shifter_variable_8bit.v;
+hierarchy -check -top left_shifter_variable_8bit;
+synth_xilinx -family xc7 -top left_shifter_variable_8bit;
+stat;
+ltp;
+write_json netlist/left_shifter_variable_8bit.json;
+"
+
+
+echo ""
+echo "========================================"
+echo " VARIABLE LEFT ROTATOR SYNTHESIS"
+echo "========================================"
+
+yosys -Q -l reports/left_rotator_variable_8bit.log -p "
+read_verilog design/left_rotator_variable_8bit.v;
+hierarchy -check -top left_rotator_variable_8bit;
+synth_xilinx -family xc7 -top left_rotator_variable_8bit;
+stat;
+ltp;
+write_json netlist/left_rotator_variable_8bit.json;
+"
+
+
+echo ""
+echo "========================================"
 echo " ALL SYNTHESIS COMPLETED"
 echo "========================================"
 echo ""
@@ -108,4 +138,6 @@ echo "reports/max3_cascade.log"
 echo "reports/max3_balanced.log"
 echo "reports/left_shifter_8bit.log"
 echo "reports/left_rotator_8bit.log"
+echo "reports/left_shifter_variable_8bit.log"
+echo "reports/left_rotator_variable_8bit.log"
 echo ""

@@ -15,11 +15,15 @@ module tb_compare;
 
     wire [7:0] shifted;
     wire [7:0] rotated;
+    wire [7:0] variable_shifted;
+    wire [7:0] variable_rotated;
 
     reg [9:0] expected_sum;
     reg [7:0] expected_max;
+    reg [2:0] shamt;
 
     integer i;
+    integer shamt_test;
     integer errors;
 
 
@@ -85,6 +89,20 @@ module tb_compare;
     );
 
 
+    left_shifter_variable_8bit uut_left_shifter_variable (
+        .data_in(a),
+        .shamt(shamt),
+        .data_out(variable_shifted)
+    );
+
+
+    left_rotator_variable_8bit uut_left_rotator_variable (
+        .data_in(a),
+        .shamt(shamt),
+        .data_out(variable_rotated)
+    );
+
+
     // ------------------------------------
     // Reference function for maximum
     // ------------------------------------
@@ -121,6 +139,7 @@ module tb_compare;
         $dumpvars(0, tb_compare);
 
         errors = 0;
+        shamt = 0;
 
         $display("");
         $display("========================================");
@@ -330,6 +349,38 @@ module tb_compare;
                 $display("Left rotation error: A=%0d", a);
 
                 errors = errors + 1;
+
+            end
+
+            for (shamt_test = 0; shamt_test < 8; shamt_test = shamt_test + 1) begin
+
+                shamt = shamt_test;
+
+                #1;
+
+                if (variable_shifted !== (a << shamt)) begin
+
+                    $display(
+                        "Variable left shift error: A=%0d SHAMT=%0d",
+                        a,
+                        shamt
+                    );
+
+                    errors = errors + 1;
+
+                end
+
+                if (variable_rotated !== ((a << shamt) | (a >> (8 - shamt)))) begin
+
+                    $display(
+                        "Variable left rotation error: A=%0d SHAMT=%0d",
+                        a,
+                        shamt
+                    );
+
+                    errors = errors + 1;
+
+                end
 
             end
 

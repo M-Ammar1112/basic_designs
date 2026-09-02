@@ -14,8 +14,12 @@ The current synthesis flow targets Yosys with Xilinx 7-series technology mapping
 | Three-input maximum | `max3_cascade` | Selects the maximum of three 8-bit unsigned inputs through cascaded comparisons. |
 | Eight-bit left shifter | `left_shifter_8bit` | Shifts the input left by one bit and inserts zero at bit 0. |
 | Eight-bit left rotator | `left_rotator_8bit` | Rotates the input left by one bit and moves bit 7 to bit 0. |
+| Variable eight-bit left shifter | `left_shifter_variable_8bit` | Shifts the input left by the unsigned 3-bit `shamt` value and inserts zeros at bit 0. |
+| Variable eight-bit left rotator | `left_rotator_variable_8bit` | Rotates the input left by the unsigned 3-bit `shamt` value. |
 
-The two implementations of each adder and maximum function provide a simple basis for comparing RTL structure, synthesized logic, timing, and resource usage. The shifter and rotator demonstrate common fixed-width bit-manipulation building blocks.
+The two implementations of each adder and maximum function provide a simple basis for comparing RTL structure, synthesized logic, timing, and resource usage. The shifter and rotator designs demonstrate common fixed-width bit-manipulation building blocks.
+
+The variable shifter and rotator accept `shamt[2:0]`, so they support shift or rotation amounts from 0 through 7. A shift amount of 0 leaves the input unchanged. The variable shifter discards bits shifted out of bit 7 and fills the low bits with zeros; the variable rotator wraps those bits back into the low positions.
 
 ## Repository Layout
 
