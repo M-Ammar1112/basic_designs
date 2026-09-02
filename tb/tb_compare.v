@@ -13,6 +13,9 @@ module tb_compare;
     wire [7:0] max_cascade;
     wire [7:0] max_balanced;
 
+    wire [7:0] shifted;
+    wire [7:0] rotated;
+
     reg [9:0] expected_sum;
     reg [7:0] expected_max;
 
@@ -67,6 +70,18 @@ module tb_compare;
         .b(b),
         .c(c),
         .max_out(max_balanced)
+    );
+
+
+    left_shifter_8bit uut_left_shifter (
+        .data_in(a),
+        .data_out(shifted)
+    );
+
+
+    left_rotator_8bit uut_left_rotator (
+        .data_in(a),
+        .data_out(rotated)
     );
 
 
@@ -295,6 +310,24 @@ module tb_compare;
             if (max_cascade !== max_balanced) begin
 
                 $display("MAX implementations disagree.");
+
+                errors = errors + 1;
+
+            end
+
+
+            // Check left shift and left rotation
+            if (shifted !== {a[6:0], 1'b0}) begin
+
+                $display("Left shift error: A=%0d", a);
+
+                errors = errors + 1;
+
+            end
+
+            if (rotated !== {a[6:0], a[7]}) begin
+
+                $display("Left rotation error: A=%0d", a);
 
                 errors = errors + 1;
 
