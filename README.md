@@ -20,6 +20,7 @@ The two implementations of each function provide a simple basis for comparing RT
 ```text
 design/       Synthesizable Verilog RTL modules
 tb/           Simulation testbenches
+Makefile      Build, simulation, synthesis, and cleanup targets
 run_all.sh    Yosys synthesis flow for all current designs
 netlist/      Generated synthesis netlists, ignored by Git
 reports/      Generated synthesis reports, ignored by Git
@@ -28,19 +29,22 @@ reports/      Generated synthesis reports, ignored by Git
 ## Requirements
 
 - Yosys
-- Icarus Verilog or another Verilog simulator
-- A shell environment capable of running `run_all.sh`
+- Icarus Verilog and its `vvp` runtime
+- GNU Make
+- A shell environment capable of running the synthesis script
 
 The synthesis script uses the Yosys `synth_xilinx` flow with the `xc7` family.
 
 ## Simulation
 
-From the repository root, compile and run the comparison testbench with Icarus Verilog:
+From the repository root, compile and run the comparison testbench with Make:
 
 ```bash
-iverilog -o simulation.out tb/tb_compare.v design/*.v
-vvp simulation.out
+make tb-build
+make tb-run
 ```
+
+The `tb-run` target also builds the testbench when needed. The shorter `make sim` target is an alias for the same compile-and-run workflow.
 
 The testbench compares the balanced and cascaded implementations against reference results, including directed cases and 5,000 random tests. It also generates `waveform.vcd` for waveform inspection. Generated simulation output is excluded by `.gitignore`.
 
@@ -49,10 +53,19 @@ The testbench compares the balanced and cascaded implementations against referen
 Run the complete Yosys synthesis flow with:
 
 ```bash
-./run_all.sh
+make synth
 ```
 
 The script synthesizes each current top-level module and writes JSON netlists to `netlist/` and synthesis logs to `reports/`. These directories are generated artifacts and are intentionally not tracked in Git.
+
+## Common Commands
+
+```bash
+make help       # List available targets
+make all        # Run simulation and synthesis
+make clean      # Remove simulation outputs
+make distclean  # Remove simulation and synthesis outputs
+```
 
 ## Reuse in Larger Designs
 
