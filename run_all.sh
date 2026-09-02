@@ -128,6 +128,21 @@ write_json netlist/left_rotator_variable.json;
 
 echo ""
 echo "========================================"
+echo " REGISTER FILE SYNTHESIS"
+echo "========================================"
+
+yosys -Q -l reports/register_file.log -p "
+read_verilog design/register_file.v;
+hierarchy -check -top register_file;
+synth_xilinx -family xc7 -top register_file;
+stat;
+ltp;
+write_json netlist/register_file.json;
+"
+
+
+echo ""
+echo "========================================"
 echo " ALL SYNTHESIS COMPLETED"
 echo "========================================"
 echo ""
@@ -140,4 +155,5 @@ echo "reports/left_shifter.log"
 echo "reports/left_rotator.log"
 echo "reports/left_shifter_variable.log"
 echo "reports/left_rotator_variable.log"
+echo "reports/register_file.log"
 echo ""

@@ -22,9 +22,22 @@ module tb_compare;
     reg [7:0] expected_max;
     reg [2:0] shamt;
 
+    reg clk;
+    reg [4:0] rs1;
+    reg [4:0] rs2;
+    reg [4:0] rd;
+    reg reg_write;
+    reg [31:0] write_data;
+    wire [31:0] read_data1;
+    wire [31:0] read_data2;
+    reg [31:0] expected_registers [0:31];
+
     integer i;
     integer shamt_test;
+    integer register_test;
     integer errors;
+
+    always #5 clk = ~clk;
 
 
     // ------------------------------------
@@ -103,6 +116,18 @@ module tb_compare;
     );
 
 
+    register_file uut_register_file (
+        .clk(clk),
+        .rs1(rs1),
+        .rs2(rs2),
+        .read_data1(read_data1),
+        .read_data2(read_data2),
+        .reg_write(reg_write),
+        .rd(rd),
+        .write_data(write_data)
+    );
+
+
     // ------------------------------------
     // Reference function for maximum
     // ------------------------------------
@@ -140,6 +165,13 @@ module tb_compare;
 
         errors = 0;
         shamt = 0;
+        expected_registers[0] = 32'd0;
+        clk = 0;
+        rs1 = 0;
+        rs2 = 0;
+        rd = 0;
+        reg_write = 0;
+        write_data = 0;
 
         $display("");
         $display("========================================");
@@ -180,6 +212,10 @@ module tb_compare;
         $display("Expected Max  = %0d", expected_max);
         $display("Cascade Max   = %0d", max_cascade);
         $display("Balanced Max  = %0d", max_balanced);
+        $display("Left Shift    = %0d", shifted);
+        $display("Left Rotate   = %0d", rotated);
+        $display("Variable Shift (0)  = %0d", variable_shifted);
+        $display("Variable Rotate (0) = %0d", variable_rotated);
 
 
         if (sum_cascade !== expected_sum)
@@ -223,6 +259,10 @@ module tb_compare;
         $display("Expected Max  = %0d", expected_max);
         $display("Cascade Max   = %0d", max_cascade);
         $display("Balanced Max  = %0d", max_balanced);
+        $display("Left Shift    = %0d", shifted);
+        $display("Left Rotate   = %0d", rotated);
+        $display("Variable Shift (0)  = %0d", variable_shifted);
+        $display("Variable Rotate (0) = %0d", variable_rotated);
 
 
         if (sum_cascade !== expected_sum)
@@ -235,6 +275,74 @@ module tb_compare;
             errors = errors + 1;
 
         if (max_balanced !== expected_max)
+            errors = errors + 1;
+
+
+        // ====================================
+        // REGISTER FILE TESTS
+        // ====================================
+
+        $display("");
+        $display("REGISTER FILE TEST");
+        $display("Writing and reading all 32 registers...");
+
+        for (register_test = 1; register_test < 32; register_test = register_test + 1) begin
+
+            rd = register_test;
+            write_data = 32'hA5000000 | register_test;
+            expected_registers[register_test] = write_data;
+            reg_write = 1;
+
+            @(posedge clk);
+            #1;
+
+        end
+
+        reg_write = 0;
+        rd = 0;
+        rs1 = 0;
+        rs2 = 0;
+        #1;
+
+        $display("x0 read port 1 = %h", read_data1);
+        $display("x0 read port 2 = %h", read_data2);
+
+        if (read_data1 !== 32'd0 || read_data2 !== 32'd0)
+            errors = errors + 1;
+
+        for (register_test = 1; register_test < 32; register_test = register_test + 1) begin
+
+            rs1 = register_test;
+            rs2 = 31 - register_test;
+            #1;
+
+            $display(
+                "rs1=x%0d -> %h, rs2=x%0d -> %h",
+                rs1,
+                read_data1,
+                rs2,
+                read_data2
+            );
+
+            if (read_data1 !== expected_registers[register_test])
+                errors = errors + 1;
+
+            if (read_data2 !== expected_registers[31 - register_test])
+                errors = errors + 1;
+
+        end
+
+        // x0 must remain zero when a write is attempted.
+        rd = 0;
+        write_data = 32'hFFFFFFFF;
+        reg_write = 1;
+        @(posedge clk);
+        #1;
+        reg_write = 0;
+        rs1 = 0;
+        #1;
+
+        if (read_data1 !== 32'd0)
             errors = errors + 1;
 
 

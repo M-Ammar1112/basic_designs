@@ -16,10 +16,13 @@ The current synthesis flow targets Yosys with Xilinx 7-series technology mapping
 | Eight-bit left rotator | `left_rotator` | Rotates the input left by one bit and moves bit 7 to bit 0. |
 | Variable eight-bit left shifter | `left_shifter_variable` | Shifts the input left by the unsigned 3-bit `shamt` value and inserts zeros at bit 0. |
 | Variable eight-bit left rotator | `left_rotator_variable` | Rotates the input left by the unsigned 3-bit `shamt` value. |
+| RV32I register file | `register_file` | 32 registers of 32 bits with two asynchronous read ports, one synchronous write port, and a hardwired zero register. |
 
 The two implementations of each adder and maximum function provide a simple basis for comparing RTL structure, synthesized logic, timing, and resource usage. The shifter and rotator designs demonstrate common fixed-width bit-manipulation building blocks.
 
 The variable shifter and rotator accept `shamt[2:0]`, so they support shift or rotation amounts from 0 through 7. A shift amount of 0 leaves the input unchanged. The variable shifter discards bits shifted out of bit 7 and fills the low bits with zeros; the variable rotator wraps those bits back into the low positions.
+
+The `register_file` module follows the standard RV32I register-file organization. `rs1` and `rs2` select the two combinational read ports, while `rd`, `write_data`, and `reg_write` control a write on the rising edge of `clk`. Register `x0` always reads as zero and ignores writes.
 
 ## Repository Layout
 
@@ -53,7 +56,7 @@ make tb-run
 
 The `tb-run` target also builds the testbench when needed. The shorter `make sim` target is an alias for the same compile-and-run workflow.
 
-The testbench compares the balanced and cascaded implementations against reference results, including directed cases and 5,000 random tests. It also generates `waveform.vcd` for waveform inspection. Generated simulation output is excluded by `.gitignore`.
+The testbench compares all current designs against reference results, including directed cases, exhaustive variable shift amounts, all 32 register-file addresses, the `x0` behavior, and 5,000 random tests. It also displays representative outputs and generates `waveform.vcd` for waveform inspection. Generated simulation output is excluded by `.gitignore`.
 
 ## Synthesis
 
