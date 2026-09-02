@@ -82,6 +82,14 @@ make rv32i-asm
 
 The resulting `basic.hex` can be loaded by the core testbench. Set `RV32I_AS` and `RV32I_OBJCOPY` to use another compatible toolchain.
 
+Run the broader instruction-coverage program with:
+
+```bash
+make rv32i-coverage-run
+```
+
+This separate test exercises upper-immediate instructions, register and immediate ALU operations, logical and arithmetic shifts, signed and unsigned comparisons, all conditional branch variants, `jal`, stores, loads, and byte/halfword sign extension. Its assembly source is `tests/RV32I/coverage.S`, and its expected memory signatures are checked by `tb/RV32I/tb_rv32i_coverage.v`.
+
 ## Synthesis
 
 Run the complete Yosys synthesis flow with:

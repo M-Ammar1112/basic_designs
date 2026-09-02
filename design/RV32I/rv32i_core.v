@@ -71,6 +71,14 @@ module rv32i_core (
         .write_data(write_data)
     );
 
+    function [31:0] arithmetic_right_shift;
+        input [31:0] value;
+        input [4:0] amount;
+        begin
+            arithmetic_right_shift = (value >> amount) | ({32{value[31]}} << (32 - amount));
+        end
+    endfunction
+
     always @* begin
         next_pc = pc + 32'd4;
         immediate = 32'd0;
@@ -146,7 +154,7 @@ module rv32i_core (
                     3'b110: alu_result = read_data1 | immediate;
                     3'b111: alu_result = read_data1 & immediate;
                     3'b001: alu_result = read_data1 << instruction[24:20];
-                    3'b101: alu_result = instruction[30] ? ($signed(read_data1) >>> instruction[24:20]) : (read_data1 >> instruction[24:20]);
+                    3'b101: alu_result = instruction[30] ? arithmetic_right_shift(read_data1, instruction[24:20]) : (read_data1 >> instruction[24:20]);
                     default: alu_result = 32'd0;
                 endcase
                 write_data = alu_result;
@@ -159,7 +167,7 @@ module rv32i_core (
                     3'b010: alu_result = ($signed(read_data1) < $signed(read_data2));
                     3'b011: alu_result = (read_data1 < read_data2);
                     3'b100: alu_result = read_data1 ^ read_data2;
-                    3'b101: alu_result = funct7[5] ? ($signed(read_data1) >>> read_data2[4:0]) : (read_data1 >> read_data2[4:0]);
+                    3'b101: alu_result = funct7[5] ? arithmetic_right_shift(read_data1, read_data2[4:0]) : (read_data1 >> read_data2[4:0]);
                     3'b110: alu_result = read_data1 | read_data2;
                     3'b111: alu_result = read_data1 & read_data2;
                     default: alu_result = 32'd0;
