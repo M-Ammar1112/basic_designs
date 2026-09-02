@@ -73,7 +73,12 @@ module rv32i_core (
         .alu_src_immediate(alu_src_immediate), .mem_read(mem_read),
         .mem_write(mem_write), .branch(branch), .jump(jump),
         .jump_register(jump_register), .halt(halt_instruction),
-        .writeback_select(writeback_select), .alu_control(alu_control)
+        .writeback_select(writeback_select)
+    );
+
+    rv32i_alu_control alu_control_unit (
+        .opcode(instruction[6:0]), .funct3(instruction[14:12]),
+        .funct7(instruction[31:25]), .alu_control(alu_control)
     );
 
     register_file register_file (
