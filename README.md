@@ -72,6 +72,8 @@ Run the included core test with the checked-in instruction image:
 make rv32i-run
 ```
 
+The testbench prints a cycle-by-cycle assembly-style instruction trace, including the program counter and decoded operands. Example output is formatted as `PC=00000008  add x3, x1, x2`. Unknown instruction encodings are displayed as `.word` values.
+
 The separate testbench in `tb/RV32I/` checks arithmetic, branches, stores, loads, and shifts. Assembly source is in `tests/RV32I/basic.S`. When a RISC-V-capable Clang or GNU toolchain is installed, compile it with:
 
 ```bash
