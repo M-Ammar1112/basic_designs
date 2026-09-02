@@ -1,199 +1,112 @@
 module rv32i_core (
     input         clk,
     input         reset,
-    output [31:0]  instruction_address,
-    input  [31:0]  instruction,
-    output         data_valid,
-    output         data_write,
-    output [31:0]  data_address,
-    output [31:0]  data_write_data,
-    output [3:0]   data_byte_enable,
-    input  [31:0]  data_read_data,
-    output         halted
+    output [31:0] instruction_address,
+    input  [31:0] instruction,
+    output        data_valid,
+    output        data_write,
+    output [31:0] data_address,
+    output [31:0] data_write_data,
+    output [3:0]  data_byte_enable,
+    input  [31:0] data_read_data,
+    output        halted
 );
 
-    localparam [6:0] OPCODE_LUI    = 7'b0110111;
-    localparam [6:0] OPCODE_AUIPC  = 7'b0010111;
-    localparam [6:0] OPCODE_JAL    = 7'b1101111;
-    localparam [6:0] OPCODE_JALR   = 7'b1100111;
-    localparam [6:0] OPCODE_BRANCH = 7'b1100011;
-    localparam [6:0] OPCODE_LOAD   = 7'b0000011;
-    localparam [6:0] OPCODE_STORE  = 7'b0100011;
-    localparam [6:0] OPCODE_IMM    = 7'b0010011;
-    localparam [6:0] OPCODE_REG    = 7'b0110011;
-    localparam [6:0] OPCODE_MISC   = 7'b0001111;
-    localparam [6:0] OPCODE_SYSTEM = 7'b1110011;
-
-    reg [31:0] pc;
-    reg halted_reg;
-
-    wire [6:0] opcode = instruction[6:0];
+    wire [31:0] pc;
+    wire [31:0] pc_plus4;
+    wire [31:0] auipc_result;
+    wire [31:0] immediate;
+    wire [31:0] rs1_data;
+    wire [31:0] rs2_data;
+    wire [31:0] alu_operand_b;
+    wire [31:0] alu_result;
+    wire [31:0] branch_target;
+    wire [31:0] load_data;
+    wire [31:0] store_data_shifted;
+    wire [31:0] writeback_data;
+    wire [31:0] next_pc;
+    wire [3:0] byte_enable;
+    wire [3:0] alu_control;
+    wire [1:0] writeback_select;
+    wire reg_write;
+    wire alu_src_immediate;
+    wire mem_read;
+    wire mem_write;
+    wire branch;
+    wire jump;
+    wire jump_register;
+    wire branch_taken;
+    wire halt_instruction;
     wire [4:0] rd = instruction[11:7];
-    wire [2:0] funct3 = instruction[14:12];
     wire [4:0] rs1 = instruction[19:15];
     wire [4:0] rs2 = instruction[24:20];
-    wire [6:0] funct7 = instruction[31:25];
-
-    wire [31:0] read_data1;
-    wire [31:0] read_data2;
-    reg reg_write;
-    reg [31:0] write_data;
-
-    reg [31:0] next_pc;
-    reg [31:0] immediate;
-    reg [31:0] effective_address;
-    reg [31:0] load_data;
-    reg branch_taken;
-    reg [31:0] alu_result;
-    reg [31:0] shifted_load_data;
-    reg [7:0] load_byte;
-    reg [15:0] load_half;
 
     assign instruction_address = pc;
-    assign halted = halted_reg;
-    assign data_valid = !halted_reg && ((opcode == OPCODE_LOAD) || (opcode == OPCODE_STORE));
-    assign data_write = data_valid && (opcode == OPCODE_STORE);
-    assign data_address = effective_address;
-    assign data_write_data = read_data2 << (8 * effective_address[1:0]);
-    assign data_byte_enable = (opcode != OPCODE_STORE) ? 4'b0000 :
-                              (funct3 == 3'b000) ? (4'b0001 << effective_address[1:0]) :
-                              (funct3 == 3'b001) ? (4'b0011 << {effective_address[1], 1'b0}) :
-                                                   4'b1111;
+    assign next_pc = branch_taken ? branch_target : pc_plus4;
+    assign halted = halt_instruction;
+    assign data_valid = !halt_instruction && (mem_read || mem_write);
+    assign data_write = data_valid && mem_write;
+    assign data_address = alu_result;
+    assign data_write_data = store_data_shifted;
+    assign data_byte_enable = data_write ? byte_enable : 4'b0000;
+    assign alu_operand_b = alu_src_immediate ? immediate : rs2_data;
 
-    register_file registers (
-        .clk(clk),
-        .rs1(rs1),
-        .rs2(rs2),
-        .read_data1(read_data1),
-        .read_data2(read_data2),
-        .reg_write(reg_write && !reset && !halted_reg),
-        .rd(rd),
-        .write_data(write_data)
+    rv32i_pc pc_register (
+        .clk(clk), .reset(reset), .enable(!halt_instruction),
+        .next_pc(next_pc), .pc(pc)
     );
 
-    function [31:0] arithmetic_right_shift;
-        input [31:0] value;
-        input [4:0] amount;
-        begin
-            arithmetic_right_shift = (value >> amount) | ({32{value[31]}} << (32 - amount));
-        end
-    endfunction
+    rv32i_adder pc_incrementer (
+        .a(pc), .b(32'd4), .sum(pc_plus4)
+    );
 
-    always @* begin
-        next_pc = pc + 32'd4;
-        immediate = 32'd0;
-        effective_address = read_data1;
-        load_data = data_read_data;
-        shifted_load_data = data_read_data >> (8 * effective_address[1:0]);
-        load_byte = shifted_load_data[7:0];
-        load_half = shifted_load_data[15:0];
-        branch_taken = 1'b0;
-        alu_result = 32'd0;
-        reg_write = 1'b0;
-        write_data = 32'd0;
+    rv32i_adder auipc_adder (
+        .a(pc), .b(immediate), .sum(auipc_result)
+    );
 
-        case (opcode)
-            OPCODE_LUI: begin
-                write_data = {instruction[31:12], 12'd0};
-                reg_write = 1'b1;
-            end
-            OPCODE_AUIPC: begin
-                write_data = pc + {instruction[31:12], 12'd0};
-                reg_write = 1'b1;
-            end
-            OPCODE_JAL: begin
-                immediate = {{11{instruction[31]}}, instruction[31], instruction[19:12], instruction[20], instruction[30:21], 1'b0};
-                next_pc = pc + immediate;
-                write_data = pc + 32'd4;
-                reg_write = 1'b1;
-            end
-            OPCODE_JALR: begin
-                immediate = {{20{instruction[31]}}, instruction[31:20]};
-                next_pc = (read_data1 + immediate) & 32'hfffffffe;
-                write_data = pc + 32'd4;
-                reg_write = 1'b1;
-            end
-            OPCODE_BRANCH: begin
-                immediate = {{19{instruction[31]}}, instruction[31], instruction[7], instruction[30:25], instruction[11:8], 1'b0};
-                case (funct3)
-                    3'b000: branch_taken = (read_data1 == read_data2);
-                    3'b001: branch_taken = (read_data1 != read_data2);
-                    3'b100: branch_taken = ($signed(read_data1) < $signed(read_data2));
-                    3'b101: branch_taken = ($signed(read_data1) >= $signed(read_data2));
-                    3'b110: branch_taken = (read_data1 < read_data2);
-                    3'b111: branch_taken = (read_data1 >= read_data2);
-                    default: branch_taken = 1'b0;
-                endcase
-                if (branch_taken)
-                    next_pc = pc + immediate;
-            end
-            OPCODE_LOAD: begin
-                immediate = {{20{instruction[31]}}, instruction[31:20]};
-                effective_address = read_data1 + immediate;
-                case (funct3)
-                    3'b000: write_data = {{24{load_byte[7]}}, load_byte};
-                    3'b001: write_data = {{16{load_half[15]}}, load_half};
-                    3'b010: write_data = load_data;
-                    3'b100: write_data = {24'd0, load_byte};
-                    3'b101: write_data = {16'd0, load_half};
-                    default: write_data = 32'd0;
-                endcase
-                reg_write = 1'b1;
-            end
-            OPCODE_STORE: begin
-                immediate = {{20{instruction[31]}}, instruction[31:25], instruction[11:7]};
-                effective_address = read_data1 + immediate;
-            end
-            OPCODE_IMM: begin
-                immediate = {{20{instruction[31]}}, instruction[31:20]};
-                case (funct3)
-                    3'b000: alu_result = read_data1 + immediate;
-                    3'b010: alu_result = ($signed(read_data1) < $signed(immediate));
-                    3'b011: alu_result = (read_data1 < immediate);
-                    3'b100: alu_result = read_data1 ^ immediate;
-                    3'b110: alu_result = read_data1 | immediate;
-                    3'b111: alu_result = read_data1 & immediate;
-                    3'b001: alu_result = read_data1 << instruction[24:20];
-                    3'b101: alu_result = instruction[30] ? arithmetic_right_shift(read_data1, instruction[24:20]) : (read_data1 >> instruction[24:20]);
-                    default: alu_result = 32'd0;
-                endcase
-                write_data = alu_result;
-                reg_write = 1'b1;
-            end
-            OPCODE_REG: begin
-                case (funct3)
-                    3'b000: alu_result = funct7[5] ? (read_data1 - read_data2) : (read_data1 + read_data2);
-                    3'b001: alu_result = read_data1 << read_data2[4:0];
-                    3'b010: alu_result = ($signed(read_data1) < $signed(read_data2));
-                    3'b011: alu_result = (read_data1 < read_data2);
-                    3'b100: alu_result = read_data1 ^ read_data2;
-                    3'b101: alu_result = funct7[5] ? arithmetic_right_shift(read_data1, read_data2[4:0]) : (read_data1 >> read_data2[4:0]);
-                    3'b110: alu_result = read_data1 | read_data2;
-                    3'b111: alu_result = read_data1 & read_data2;
-                    default: alu_result = 32'd0;
-                endcase
-                write_data = alu_result;
-                reg_write = 1'b1;
-            end
-            OPCODE_SYSTEM: begin
-                if ((instruction[31:20] == 12'd0) || (instruction[31:20] == 12'd1))
-                    next_pc = pc;
-            end
-            default: begin
-            end
-        endcase
-    end
+    rv32i_immediate_generator immediate_generator (
+        .instruction(instruction), .immediate(immediate)
+    );
 
-    always @(posedge clk) begin
-        if (reset) begin
-            pc <= 32'd0;
-            halted_reg <= 1'b0;
-        end
-        else if (!halted_reg) begin
-            pc <= next_pc;
-            if ((opcode == OPCODE_SYSTEM) && ((instruction[31:20] == 12'd0) || (instruction[31:20] == 12'd1)))
-                halted_reg <= 1'b1;
-        end
-    end
+    rv32i_decoder decoder (
+        .instruction(instruction), .reg_write(reg_write),
+        .alu_src_immediate(alu_src_immediate), .mem_read(mem_read),
+        .mem_write(mem_write), .branch(branch), .jump(jump),
+        .jump_register(jump_register), .halt(halt_instruction),
+        .writeback_select(writeback_select), .alu_control(alu_control)
+    );
+
+    register_file register_file (
+        .clk(clk), .rs1(rs1), .rs2(rs2),
+        .read_data1(rs1_data), .read_data2(rs2_data),
+        .reg_write(reg_write && !reset && !halt_instruction),
+        .rd(rd), .write_data(writeback_data)
+    );
+
+    rv32i_alu alu (
+        .a(rs1_data), .b(alu_operand_b),
+        .control(alu_control), .result(alu_result)
+    );
+
+    rv32i_branch_jump_logic branch_jump_logic (
+        .pc(pc), .rs1_data(rs1_data), .immediate(immediate),
+        .compare_data(rs2_data), .branch(branch), .jump(jump),
+        .jump_register(jump_register), .funct3(instruction[14:12]),
+        .target(branch_target), .taken(branch_taken)
+    );
+
+    rv32i_load_store_unit load_store_unit (
+        .memory_data(data_read_data), .store_data(rs2_data),
+        .address(alu_result), .funct3(instruction[14:12]),
+        .load_data(load_data), .store_data_shifted(store_data_shifted),
+        .byte_enable(byte_enable)
+    );
+
+    rv32i_writeback_mux writeback_mux (
+        .alu_result(alu_result), .pc_plus4(pc_plus4),
+        .upper_immediate((instruction[6:0] == 7'b0010111) ? auipc_result : immediate),
+        .load_data(load_data),
+        .select(writeback_select), .writeback_data(writeback_data)
+    );
 
 endmodule

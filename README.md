@@ -64,7 +64,7 @@ The testbench compares all current designs against reference results, including 
 
 ## RV32I Core
 
-The core is located in `design/RV32I/rv32i_core.v` and is intended as a compact learning implementation of the RV32I base integer ISA. It has a combinational instruction interface and a byte-addressable data-memory interface. `FENCE` is treated as a no-op, while `ECALL` and `EBREAK` halt the simulation core through the `halted` output.
+The core is located in `design/RV32I/rv32i_core.v` and is intended as a compact learning implementation of the RV32I base integer ISA. It is structurally composed from reusable modules for the program counter, PC adders, immediate generation, instruction decoding, ALU control, ALU operations, branch and jump selection, load/store formatting, register-file access, and writeback selection. It has a combinational instruction interface and a byte-addressable data-memory interface. `FENCE` is treated as a no-op, while `ECALL` and `EBREAK` halt the simulation core through the `halted` output.
 
 Run the included core test with the checked-in instruction image:
 

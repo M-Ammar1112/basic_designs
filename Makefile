@@ -42,7 +42,7 @@ tb-run: tb-build
 sim: tb-run
 
 rv32i-build:
-	$(IVERILOG) -g2012 -o $(RV32I_SIM) tb/RV32I/tb_rv32i_core.v design/RV32I/rv32i_core.v design/register_file.v
+	$(IVERILOG) -g2012 -o $(RV32I_SIM) tb/RV32I/tb_rv32i_core.v design/RV32I/*.v design/register_file.v
 
 rv32i-run: rv32i-build
 	$(VVP) $(RV32I_SIM)
@@ -54,7 +54,7 @@ rv32i-asm:
 	od -An -tx1 -v tests/RV32I/basic.bin | awk '{ for (i = 1; i <= NF; i++) { byte[count % 4] = $$i; count++; if (count % 4 == 0) printf "%s%s%s%s\n", byte[3], byte[2], byte[1], byte[0] } }' > tests/RV32I/basic.hex
 
 rv32i-coverage-build:
-	$(IVERILOG) -g2012 -o $(RV32I_COVERAGE_SIM) tb/RV32I/tb_rv32i_coverage.v design/RV32I/rv32i_core.v design/register_file.v
+	$(IVERILOG) -g2012 -o $(RV32I_COVERAGE_SIM) tb/RV32I/tb_rv32i_coverage.v design/RV32I/*.v design/register_file.v
 
 rv32i-coverage-run: rv32i-coverage-build
 	$(VVP) $(RV32I_COVERAGE_SIM)

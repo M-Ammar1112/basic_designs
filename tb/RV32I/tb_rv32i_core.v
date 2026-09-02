@@ -156,7 +156,7 @@ module tb_rv32i_core;
     endtask
 
     always @(posedge clk) begin
-        if (!reset && !halted)
+        if (!reset)
             trace_instruction(instruction_address, instruction);
     end
 

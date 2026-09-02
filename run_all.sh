@@ -147,7 +147,7 @@ echo " RV32I CORE SYNTHESIS"
 echo "========================================"
 
 yosys -Q -l reports/rv32i_core.log -p "
-read_verilog design/RV32I/rv32i_core.v design/register_file.v;
+read_verilog design/RV32I/*.v design/register_file.v;
 hierarchy -check -top rv32i_core;
 synth_xilinx -family xc7 -top rv32i_core;
 stat;
