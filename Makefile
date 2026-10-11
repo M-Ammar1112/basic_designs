@@ -5,6 +5,7 @@ XDOT ?= xdot
 SIM ?= simulation.out
 RV32I_SIM ?= rv32i_simulation.out
 RV32I_COVERAGE_SIM ?= rv32i_coverage_simulation.out
+GCD_SIM ?= gcd_simulation.out
 RV32I_AS ?= clang
 RV32I_OBJCOPY ?= llvm-objcopy
 RV32I_LD ?= ld.lld
@@ -14,7 +15,7 @@ SCHEMATIC ?= schematic.dot
 RTL_SOURCES := $(wildcard design/*.v)
 TB_SOURCE := tb/tb_compare.v
 
-.PHONY: all help tb-build tb-run sim rv32i-build rv32i-run rv32i-asm rv32i-coverage-build rv32i-coverage-run rv32i-coverage-asm synth schematic clean distclean
+.PHONY: all help tb-build tb-run sim rv32i-build rv32i-run rv32i-asm rv32i-coverage-build rv32i-coverage-run rv32i-coverage-asm gcd-build gcd-run gcd-synth synth schematic clean distclean
 
 all: tb-run rv32i-run synth
 
@@ -25,6 +26,8 @@ help:
 		'make rv32i-run Compile and run the RV32I core test' \
 		'make rv32i-asm Compile tests/RV32I/*.S (requires RISC-V tools)' \
 		'make rv32i-coverage-run Run the broader RV32I coverage test' \
+		'make gcd-run    Compile and run the GCD controller/datapath test' \
+		'make gcd-synth  Synthesize GCD and report its extracted FSM' \
 		'make synth     Synthesize all designs with Yosys' \
 		'make schematic View a design schematic (DESIGN=module)' \
 		'make all       Run both simulations and synthesis' \
@@ -65,6 +68,18 @@ rv32i-coverage-asm:
 	$(RV32I_OBJCOPY) -O binary tests/RV32I/coverage.elf tests/RV32I/coverage.bin
 	od -An -tx1 -v tests/RV32I/coverage.bin | awk '{ for (i = 1; i <= NF; i++) { byte[count % 4] = $$i; count++; if (count % 4 == 0) printf "%s%s%s%s\n", byte[3], byte[2], byte[1], byte[0] } }' > tests/RV32I/coverage.hex
 
+gcd-build: $(GCD_SIM)
+
+$(GCD_SIM): design/gcd_datapath.v design/gcd_controller.v design/gcd_top.v tb/tb_gcd.v
+	$(IVERILOG) -g2012 -s tb_gcd -o $@ tb/tb_gcd.v design/gcd_datapath.v design/gcd_controller.v design/gcd_top.v
+
+gcd-run: gcd-build
+	$(VVP) $(GCD_SIM)
+
+gcd-synth:
+	mkdir -p reports netlist
+	$(YOSYS) -Q -l reports/gcd_fsm.log -p "read_verilog design/gcd_datapath.v design/gcd_controller.v design/gcd_top.v; hierarchy -check -top gcd_top; proc; opt -nosdff -nodffe; fsm; fsm_info; stat; synth_xilinx -family xc7 -top gcd_top; stat; write_json netlist/gcd_top.json"
+
 synth:
 	./run_all.sh
 
@@ -74,7 +89,7 @@ schematic:
 	$(XDOT) $(SCHEMATIC)
 
 clean:
-	rm -f $(SIM) $(RV32I_SIM) $(RV32I_COVERAGE_SIM) waveform.vcd abc.history tb.out $(SCHEMATIC) tests/RV32I/basic.o tests/RV32I/basic.elf tests/RV32I/basic.bin tests/RV32I/coverage.o tests/RV32I/coverage.elf tests/RV32I/coverage.bin
+	rm -f $(SIM) $(RV32I_SIM) $(RV32I_COVERAGE_SIM) $(GCD_SIM) waveform.vcd gcd_waveform.vcd abc.history tb.out $(SCHEMATIC) tests/RV32I/basic.o tests/RV32I/basic.elf tests/RV32I/basic.bin tests/RV32I/coverage.o tests/RV32I/coverage.elf tests/RV32I/coverage.bin
 
 distclean: clean
 	rm -rf netlist reports

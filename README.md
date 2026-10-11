@@ -18,6 +18,7 @@ The current synthesis flow targets Yosys with Xilinx 7-series technology mapping
 | Variable eight-bit left rotator | `left_rotator_variable` | Rotates the input left by the unsigned 3-bit `shamt` value. |
 | RV32I register file | `register_file` | 32 registers of 32 bits with two asynchronous read ports, one synchronous write port, and a hardwired zero register. |
 | RV32I core | `rv32i_core` | Single-cycle RV32I integer core with instruction fetch, register, ALU, branch, jump, load, and store datapaths. |
+| GCD calculator | `gcd_top` | Iterative Euclidean GCD calculator with a 6-bit datapath and separately synthesized controller FSM. |
 
 The two implementations of each adder and maximum function provide a simple basis for comparing RTL structure, synthesized logic, timing, and resource usage. The shifter and rotator designs demonstrate common fixed-width bit-manipulation building blocks.
 
@@ -89,6 +90,18 @@ make rv32i-coverage-run
 ```
 
 This separate test exercises upper-immediate instructions, register and immediate ALU operations, logical and arithmetic shifts, signed and unsigned comparisons, all conditional branch variants, `jal`, stores, loads, and byte/halfword sign extension. Its assembly source is `tests/RV32I/coverage.S`, and its expected memory signatures are checked by `tb/RV32I/tb_rv32i_coverage.v`.
+
+## GCD Controller and Datapath
+
+The GCD design is split across `design/gcd_datapath.v`, `design/gcd_controller.v`, and `design/gcd_top.v`. It uses repeated subtraction until the two 6-bit operands are equal. Assert `start` to begin; `done` remains asserted with the result on `gcd` until `start` is deasserted. Inputs from 0 through 63 fit the datapath.
+
+Run its directed testbench with:
+
+```bash
+make gcd-run
+```
+
+The test covers `(56, 48)`, `(24, 24)`, and `(39, 52)` and writes `gcd_waveform.vcd` for waveform inspection. Synthesize the design with `make gcd-synth`, or include it in `make synth`. Yosys' FSM extraction details are recorded in `reports/gcd_fsm.log`, and the synthesized netlist is written to `netlist/gcd_top.json`.
 
 ## Synthesis
 

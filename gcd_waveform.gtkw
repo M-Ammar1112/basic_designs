@@ -1,0 +1,25 @@
+[*]
+[*] GTKWave Analyzer v3.3.120
+[dumpfile] "gcd_waveform.vcd"
+[savefile] "gcd_waveform.gtkw"
+[timestart] 0
+[size] 1500 900
+[pos] 40 40
+[sst_width] 280
+[signals_width] 190
+[sst_expanded] 1
+[sst_vpaned_height] 180
+@28
+tb_gcd.clk
+tb_gcd.reset
+tb_gcd.start
+tb_gcd.x_i[5:0]
+tb_gcd.y_i[5:0]
+tb_gcd.uut.datapath.x_reg[5:0]
+tb_gcd.uut.datapath.y_reg[5:0]
+tb_gcd.uut.controller.state[2:0]
+tb_gcd.uut.controller.load
+tb_gcd.uut.controller.subtract_x
+tb_gcd.uut.controller.subtract_y
+tb_gcd.gcd[5:0]
+tb_gcd.done
