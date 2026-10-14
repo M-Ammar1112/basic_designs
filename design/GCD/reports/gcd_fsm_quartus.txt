@@ -1,0 +1,36 @@
+Quartus Prime Synthesis — extracted state machine report
+(Captured from a successful Analysis & Synthesis of gcd_top)
+Message: Info (284007): State machine "controller|state" will be implemented
+         as a safe state machine. (gcd_controller.v, line 20)
+
++------------------------------------------------------------------------------+
+; State Machine - Summary                                                      ;
++------------------+------------------+------------+----------------+----------+
+; Name             ; Number of States ; Using aclr ; Encoding Style ; Safeness ;
++------------------+------------------+------------+----------------+----------+
+; controller|state ; 6                ; No         ; One-Hot        ; Safe     ;
++------------------+------------------+------------+----------------+----------+
+
+Encoding Type: Safe One-Hot
+
++-----------------------------------------------------------------------------------------------------------------+
+; State Machine - controller|state                                                                                ;
++------------------+------------------+------------------+--------------+---------------+------------+------------+
+; Name             ; state.SUBTRACT_Y ; state.SUBTRACT_X ; state.FINISH ; state.COMPARE ; state.LOAD ; state.IDLE ;
++------------------+------------------+------------------+--------------+---------------+------------+------------+
+; state.IDLE       ; 0                ; 0                ; 0            ; 0             ; 0          ; 0          ;
+; state.LOAD       ; 0                ; 0                ; 0            ; 0             ; 1          ; 1          ;
+; state.COMPARE    ; 0                ; 0                ; 0            ; 1             ; 0          ; 1          ;
+; state.FINISH     ; 0                ; 0                ; 1            ; 0             ; 0          ; 1          ;
+; state.SUBTRACT_X ; 0                ; 1                ; 0            ; 0             ; 0          ; 1          ;
+; state.SUBTRACT_Y ; 1                ; 0                ; 0            ; 0             ; 0          ; 1          ;
++------------------+------------------+------------------+--------------+---------------+------------+------------+
+
+Resource summary (post-synthesis):
+  Logic utilization estimate (ALMs) : 25 / 17,100 (< 1 %)
+  Total dedicated logic registers   : 18
+  Hierarchy: controller uses 6 registers; datapath uses 12 registers
+
+To open the graphical State Machine Viewer in Quartus:
+  Tools -> Netlist Viewers -> State Machine Viewer
+  (select controller|state)

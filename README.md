@@ -101,7 +101,7 @@ Run its directed testbench with:
 make gcd-run
 ```
 
-The test covers `(56, 48)`, `(24, 24)`, and `(39, 52)` and writes `gcd_waveform.vcd` for waveform inspection. Synthesize the design with `make gcd-synth`, or include it in `make synth`. Yosys' FSM extraction details are recorded in `reports/gcd_fsm.log`, and the synthesized netlist is written to `netlist/gcd_top.json`.
+The test covers `(56, 48)`, `(24, 24)`, and `(39, 52)` and writes `gcd_waveform.vcd` for waveform inspection. Synthesize with Yosys via `make gcd-synth` (FSM log in `reports/gcd_fsm.log`), or with Quartus via `make gcd-quartus` / `design/GCD/synthesize_gcd.tcl`. The lab write-up is `design/GCD/GCD_Lab_Report.md`.
 
 ## Synthesis
 

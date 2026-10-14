@@ -15,7 +15,8 @@ SCHEMATIC ?= schematic.dot
 RTL_SOURCES := $(wildcard design/*.v)
 TB_SOURCE := tb/tb_compare.v
 
-.PHONY: all help tb-build tb-run sim rv32i-build rv32i-run rv32i-asm rv32i-coverage-build rv32i-coverage-run rv32i-coverage-asm gcd-build gcd-run gcd-synth synth schematic clean distclean
+.PHONY: all help tb-build tb-run sim rv32i-build rv32i-run rv32i-asm rv32i-coverage-build rv32i-coverage-run rv32i-coverage-asm gcd-build gcd-run gcd-synth gcd-quartus synth schematic clean distclean
+QUARTUS_SH ?= quartus_sh
 
 all: tb-run rv32i-run synth
 
@@ -26,9 +27,10 @@ help:
 		'make rv32i-run Compile and run the RV32I core test' \
 		'make rv32i-asm Compile tests/RV32I/*.S (requires RISC-V tools)' \
 		'make rv32i-coverage-run Run the broader RV32I coverage test' \
-		'make gcd-run    Compile and run the GCD controller/datapath test' \
-		'make gcd-synth  Synthesize GCD and report its extracted FSM' \
-		'make synth     Synthesize all designs with Yosys' \
+		'make gcd-run     Compile and run the GCD controller/datapath test' \
+		'make gcd-synth   Synthesize GCD with Yosys and report its FSM' \
+		'make gcd-quartus Synthesize GCD with Quartus (design/GCD script)' \
+		'make synth      Synthesize all designs with Yosys' \
 		'make schematic View a design schematic (DESIGN=module)' \
 		'make all       Run both simulations and synthesis' \
 		'make clean     Remove simulation outputs' \
@@ -79,6 +81,9 @@ gcd-run: gcd-build
 gcd-synth:
 	mkdir -p reports netlist
 	$(YOSYS) -Q -l reports/gcd_fsm.log -p "read_verilog design/gcd_datapath.v design/gcd_controller.v design/gcd_top.v; hierarchy -check -top gcd_top; proc; opt -nosdff -nodffe; fsm; fsm_info; stat; synth_xilinx -family xc7 -top gcd_top; stat; write_json netlist/gcd_top.json"
+
+gcd-quartus:
+	cd design/GCD && $(QUARTUS_SH) -t synthesize_gcd.tcl
 
 synth:
 	./run_all.sh

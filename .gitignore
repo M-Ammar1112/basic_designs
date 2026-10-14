@@ -1,4 +1,4 @@
-# Simulation waveforms and generated output
+# Simulation waveforms and generated binaries
 *.vcd
 *.history
 *.out
@@ -8,7 +8,44 @@
 *.log
 *.pdf
 *.dot
+abc.history
+simulation.out
+*_simulation.out
 
-# Generated netlists and reports
+# Yosys / local synthesis artifacts
 /netlist/
 /reports/
+schematic.dot
+schematic.svg
+
+# Quartus / Altera build and workspace junk
+**/db/
+**/qdb/
+**/dni/
+**/output_files/
+**/incremental_db/
+*.qws
+*.sof
+*.pof
+*.jdi
+*.sld
+*.done
+*.rpt
+*.summary
+*.smsg
+*.qmsgdb
+*.rdb
+*.model
+*.flock
+*.kvp
+*.ddm
+*.cdb
+*.hdb
+*.smp_dump.txt
+*_dump.txt
+
+# Editor / local tool state
+.kilo/
+.vscode/
+*.swp
+*~

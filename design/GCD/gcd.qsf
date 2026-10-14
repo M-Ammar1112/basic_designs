@@ -1,0 +1,30 @@
+# -------------------------------------------------------------------------- #
+# Quartus Prime project settings for the GCD lab design
+# Generated / maintained for: design/GCD/synthesize_gcd.tcl
+# -------------------------------------------------------------------------- #
+
+set_global_assignment -name FAMILY "Agilex 5"
+set_global_assignment -name DEVICE A5EA005BB15AE4S
+set_global_assignment -name TOP_LEVEL_ENTITY gcd_top
+set_global_assignment -name ORIGINAL_QUARTUS_VERSION 26.1.1
+set_global_assignment -name PROJECT_CREATION_TIME_DATE "00:23:39  OCTOBER 12, 2026"
+set_global_assignment -name LAST_QUARTUS_VERSION "26.1.1 Pro Edition"
+set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
+set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
+set_global_assignment -name MAX_CORE_JUNCTION_TEMP 100
+set_global_assignment -name ERROR_CHECK_FREQUENCY_DIVISOR 256
+
+# Keep FSM extraction enabled so State Machine Viewer can show the controller
+set_global_assignment -name STATE_MACHINE_PROCESSING Auto
+set_global_assignment -name SAFE_STATE_MACHINE Auto
+
+# RTL sources (paths relative to this .qsf)
+
+# EDA / power defaults (harmless for synthesis-only flow)
+set_global_assignment -name EDA_TIME_SCALE "1 ps" -section_id eda_simulation
+set_global_assignment -name EDA_OUTPUT_DATA_FORMAT "VERILOG HDL" -section_id eda_simulation
+set_global_assignment -name PWRMGT_VOLTAGE_OUTPUT_FORMAT "LINEAR FORMAT"
+set_global_assignment -name PWRMGT_LINEAR_FORMAT_N "-12"
+set_global_assignment -name VERILOG_FILE ../gcd_datapath.v
+set_global_assignment -name VERILOG_FILE ../gcd_controller.v
+set_global_assignment -name VERILOG_FILE ../gcd_top.v
