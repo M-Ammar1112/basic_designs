@@ -39,9 +39,9 @@ if {[project_exists $project_name]} {
 
 # Source list (relative to the project directory)
 set rtl_files [list \
-    "../gcd_datapath.v" \
-    "../gcd_controller.v" \
-    "../gcd_top.v" \
+    "../rtl/sequential/gcd_datapath.v" \
+    "../rtl/sequential/gcd_controller.v" \
+    "../rtl/sequential/gcd_top.v" \
 ]
 
 # Drop previous Verilog file assignments if any exist, then re-add

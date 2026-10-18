@@ -29,14 +29,19 @@ The `register_file` module follows the standard RV32I register-file organization
 ## Repository Layout
 
 ```text
-design/       Synthesizable Verilog RTL modules
-tb/           Simulation testbenches
-tests/RV32I/  RV32I assembly tests and instruction images
-design/RV32I/ RV32I core RTL
-Makefile      Build, simulation, synthesis, and cleanup targets
-run_all.sh    Yosys synthesis flow for all current designs
-netlist/      Generated synthesis netlists, ignored by Git
-reports/      Generated synthesis reports, ignored by Git
+rtl/             Synthesizable Verilog RTL modules
+rtl/combinational/  Combinational designs (adders, max, rotators, regfile)
+rtl/sequential/     Sequential designs (GCD, shifters)
+rtl/RV32I/          RV32I core RTL
+verif/tb/        Simulation testbenches
+verif/tb/RV32I/  RV32I-specific testbenches
+pd/              Quartus TCL synthesis scripts
+scripts/         Python scripts (waveform plotting, etc.)
+tests/RV32I/     RV32I assembly tests and instruction images
+Makefile         Build, simulation, synthesis, and cleanup targets
+run_all.sh       Yosys synthesis flow for all current designs
+netlist/         Generated synthesis netlists, ignored by Git
+reports/         Generated synthesis reports, ignored by Git
 ```
 
 ## Requirements
@@ -65,7 +70,7 @@ The testbench compares all current designs against reference results, including 
 
 ## RV32I Core
 
-The core is located in `design/RV32I/rv32i_core.v` and is intended as a compact learning implementation of the RV32I base integer ISA. It is structurally composed from reusable modules for the program counter, PC adders, immediate generation, instruction decoding, ALU control, ALU operations, branch and jump selection, load/store formatting, register-file access, and writeback selection. It has a combinational instruction interface and a byte-addressable data-memory interface. `FENCE` is treated as a no-op, while `ECALL` and `EBREAK` halt the simulation core through the `halted` output.
+The core is located in `rtl/RV32I/rv32i_core.v` and is intended as a compact learning implementation of the RV32I base integer ISA. It is structurally composed from reusable modules for the program counter, PC adders, immediate generation, instruction decoding, ALU control, ALU operations, branch and jump selection, load/store formatting, register-file access, and writeback selection. It has a combinational instruction interface and a byte-addressable data-memory interface. `FENCE` is treated as a no-op, while `ECALL` and `EBREAK` halt the simulation core through the `halted` output.
 
 Run the included core test with the checked-in instruction image:
 
@@ -75,7 +80,7 @@ make rv32i-run
 
 The testbench prints a cycle-by-cycle assembly-style instruction trace, including the program counter and decoded operands. Example output is formatted as `PC=00000008  add x3, x1, x2`. Unknown instruction encodings are displayed as `.word` values.
 
-The separate testbench in `tb/RV32I/` checks arithmetic, branches, stores, loads, and shifts. Assembly source is in `tests/RV32I/basic.S`. When a RISC-V-capable Clang or GNU toolchain is installed, compile it with:
+The separate testbench in `verif/tb/RV32I/` checks arithmetic, branches, stores, loads, and shifts. Assembly source is in `tests/RV32I/basic.S`. When a RISC-V-capable Clang or GNU toolchain is installed, compile it with:
 
 ```bash
 make rv32i-asm
@@ -89,11 +94,11 @@ Run the broader instruction-coverage program with:
 make rv32i-coverage-run
 ```
 
-This separate test exercises upper-immediate instructions, register and immediate ALU operations, logical and arithmetic shifts, signed and unsigned comparisons, all conditional branch variants, `jal`, stores, loads, and byte/halfword sign extension. Its assembly source is `tests/RV32I/coverage.S`, and its expected memory signatures are checked by `tb/RV32I/tb_rv32i_coverage.v`.
+This separate test exercises upper-immediate instructions, register and immediate ALU operations, logical and arithmetic shifts, signed and unsigned comparisons, all conditional branch variants, `jal`, stores, loads, and byte/halfword sign extension. Its assembly source is `tests/RV32I/coverage.S`, and its expected memory signatures are checked by `verif/tb/RV32I/tb_rv32i_coverage.v`.
 
 ## GCD Controller and Datapath
 
-The GCD design is split across `design/gcd_datapath.v`, `design/gcd_controller.v`, and `design/gcd_top.v`. It uses repeated subtraction until the two 6-bit operands are equal. Assert `start` to begin; `done` remains asserted with the result on `gcd` until `start` is deasserted. Inputs from 0 through 63 fit the datapath.
+The GCD design is split across `rtl/sequential/gcd_datapath.v`, `rtl/sequential/gcd_controller.v`, and `rtl/sequential/gcd_top.v`. It uses repeated subtraction until the two 6-bit operands are equal. Assert `start` to begin; `done` remains asserted with the result on `gcd` until `start` is deasserted. Inputs from 0 through 63 fit the datapath.
 
 Run its directed testbench with:
 
@@ -101,7 +106,7 @@ Run its directed testbench with:
 make gcd-run
 ```
 
-The test covers `(56, 48)`, `(24, 24)`, and `(39, 52)` and writes `gcd_waveform.vcd` for waveform inspection. Synthesize with Yosys via `make gcd-synth` (FSM log in `reports/gcd_fsm.log`), or with Quartus via `make gcd-quartus` / `design/GCD/synthesize_gcd.tcl`. The lab write-up is `design/GCD/GCD_Lab_Report.md`.
+The test covers `(56, 48)`, `(24, 24)`, and `(39, 52)` and writes `gcd_waveform.vcd` for waveform inspection. Synthesize with Yosys via `make gcd-synth` (FSM log in `reports/gcd_fsm.log`), or with Quartus via `make gcd-quartus` / `pd/synthesize_gcd.tcl`.
 
 ## Synthesis
 
@@ -122,7 +127,7 @@ make schematic DESIGN=add4_balanced
 make schematic DESIGN=left_rotator
 ```
 
-The `DESIGN` value must match a Verilog filename in `design/` without the `.v` extension. The default is `add4_balanced`. The generated DOT file is temporary and ignored by Git.
+The `DESIGN` value must match a Verilog filename in `rtl/combinational/` or `rtl/sequential/` without the `.v` extension. The default is `add4_balanced`. The generated DOT file is temporary and ignored by Git.
 
 ## Common Commands
 
@@ -135,7 +140,7 @@ make distclean  # Remove simulation and synthesis outputs
 
 ## Reuse in Larger Designs
 
-Each file in `design/` defines a standalone top-level module with explicit ports and no hidden dependencies. A module can be instantiated in another Verilog design as a reusable component, for example:
+Each file in `rtl/` defines a standalone top-level module with explicit ports and no hidden dependencies. A module can be instantiated in another Verilog design as a reusable component, for example:
 
 ```verilog
 add4_balanced u_add4 (
@@ -147,7 +152,7 @@ add4_balanced u_add4 (
 );
 ```
 
-When adding a new design, keep the implementation synthesizable, place its RTL in `design/`, and add focused verification in `tb/` where appropriate. Designs should remain independently usable so they can serve both as learning examples and as black-box components in larger systems.
+When adding a new design, keep the implementation synthesizable, place its RTL in `rtl/`, and add focused verification in `verif/tb/` where appropriate. Designs should remain independently usable so they can serve both as learning examples and as black-box components in larger systems.
 
 ## Future Development
 

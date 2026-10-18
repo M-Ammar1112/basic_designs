@@ -11,12 +11,14 @@ RV32I_OBJCOPY ?= llvm-objcopy
 RV32I_LD ?= ld.lld
 DESIGN ?= add4_balanced
 SCHEMATIC ?= schematic.dot
+QUARTUS_SH ?= quartus_sh
 
-RTL_SOURCES := $(wildcard design/*.v)
-TB_SOURCE := tb/tb_compare.v
+RTL_COMBINATIONAL := $(wildcard rtl/combinational/*.v)
+RTL_SEQUENTIAL := $(wildcard rtl/sequential/*.v)
+RTL_RV32I := $(wildcard rtl/RV32I/*.v)
+ALL_RTL := $(RTL_COMBINATIONAL) $(RTL_SEQUENTIAL) $(RTL_RV32I)
 
 .PHONY: all help tb-build tb-run sim rv32i-build rv32i-run rv32i-asm rv32i-coverage-build rv32i-coverage-run rv32i-coverage-asm gcd-build gcd-run gcd-synth gcd-quartus synth schematic clean distclean
-QUARTUS_SH ?= quartus_sh
 
 all: tb-run rv32i-run synth
 
@@ -29,7 +31,7 @@ help:
 		'make rv32i-coverage-run Run the broader RV32I coverage test' \
 		'make gcd-run     Compile and run the GCD controller/datapath test' \
 		'make gcd-synth   Synthesize GCD with Yosys and report its FSM' \
-		'make gcd-quartus Synthesize GCD with Quartus (design/GCD script)' \
+		'make gcd-quartus Synthesize GCD with Quartus (pd/ script)' \
 		'make synth      Synthesize all designs with Yosys' \
 		'make schematic View a design schematic (DESIGN=module)' \
 		'make all       Run both simulations and synthesis' \
@@ -38,8 +40,8 @@ help:
 
 tb-build: $(SIM)
 
-$(SIM): $(RTL_SOURCES) $(TB_SOURCE)
-	$(IVERILOG) -o $@ $(TB_SOURCE) $(RTL_SOURCES)
+$(SIM): $(ALL_RTL) verif/tb/tb_compare.v
+	$(IVERILOG) -o $@ verif/tb/tb_compare.v $(ALL_RTL)
 
 tb-run: tb-build
 	$(VVP) $(SIM)
@@ -47,7 +49,7 @@ tb-run: tb-build
 sim: tb-run
 
 rv32i-build:
-	$(IVERILOG) -g2012 -o $(RV32I_SIM) tb/RV32I/tb_rv32i_core.v design/RV32I/*.v design/register_file.v
+	$(IVERILOG) -g2012 -o $(RV32I_SIM) verif/tb/RV32I/tb_rv32i_core.v $(RTL_RV32I) rtl/combinational/register_file.v
 
 rv32i-run: rv32i-build
 	$(VVP) $(RV32I_SIM)
@@ -59,7 +61,7 @@ rv32i-asm:
 	od -An -tx1 -v tests/RV32I/basic.bin | awk '{ for (i = 1; i <= NF; i++) { byte[count % 4] = $$i; count++; if (count % 4 == 0) printf "%s%s%s%s\n", byte[3], byte[2], byte[1], byte[0] } }' > tests/RV32I/basic.hex
 
 rv32i-coverage-build:
-	$(IVERILOG) -g2012 -o $(RV32I_COVERAGE_SIM) tb/RV32I/tb_rv32i_coverage.v design/RV32I/*.v design/register_file.v
+	$(IVERILOG) -g2012 -o $(RV32I_COVERAGE_SIM) verif/tb/RV32I/tb_rv32i_coverage.v $(RTL_RV32I) rtl/combinational/register_file.v
 
 rv32i-coverage-run: rv32i-coverage-build
 	$(VVP) $(RV32I_COVERAGE_SIM)
@@ -72,25 +74,26 @@ rv32i-coverage-asm:
 
 gcd-build: $(GCD_SIM)
 
-$(GCD_SIM): design/gcd_datapath.v design/gcd_controller.v design/gcd_top.v tb/tb_gcd.v
-	$(IVERILOG) -g2012 -s tb_gcd -o $@ tb/tb_gcd.v design/gcd_datapath.v design/gcd_controller.v design/gcd_top.v
+$(GCD_SIM): rtl/sequential/gcd_datapath.v rtl/sequential/gcd_controller.v rtl/sequential/gcd_top.v verif/tb/tb_gcd.v
+	$(IVERILOG) -g2012 -s tb_gcd -o $@ verif/tb/tb_gcd.v rtl/sequential/gcd_datapath.v rtl/sequential/gcd_controller.v rtl/sequential/gcd_top.v
 
 gcd-run: gcd-build
 	$(VVP) $(GCD_SIM)
 
 gcd-synth:
 	mkdir -p reports netlist
-	$(YOSYS) -Q -l reports/gcd_fsm.log -p "read_verilog design/gcd_datapath.v design/gcd_controller.v design/gcd_top.v; hierarchy -check -top gcd_top; proc; opt -nosdff -nodffe; fsm; fsm_info; stat; synth_xilinx -family xc7 -top gcd_top; stat; write_json netlist/gcd_top.json"
+	$(YOSYS) -Q -l reports/gcd_fsm.log -p "read_verilog rtl/sequential/gcd_datapath.v rtl/sequential/gcd_controller.v rtl/sequential/gcd_top.v; hierarchy -check -top gcd_top; proc; opt -nosdff -nodffe; fsm; fsm_info; stat; synth_xilinx -family xc7 -top gcd_top; stat; write_json netlist/gcd_top.json"
 
 gcd-quartus:
-	cd design/GCD && $(QUARTUS_SH) -t synthesize_gcd.tcl
+	cd pd && $(QUARTUS_SH) -t synthesize_gcd.tcl
 
 synth:
 	./run_all.sh
 
 schematic:
-	@test -f design/$(DESIGN).v || (printf 'Unknown design: %s\n' '$(DESIGN)' >&2; exit 1)
-	$(YOSYS) -Q -p "read_verilog design/$(DESIGN).v; hierarchy -check -top $(DESIGN); proc; opt; show -format dot -prefix schematic $(DESIGN)"
+	@test -f rtl/combinational/$(DESIGN).v -o -f rtl/sequential/$(DESIGN).v || (printf 'Unknown design: %s\n' '$(DESIGN)' >&2; exit 1)
+	$(YOSYS) -Q -p "read_verilog rtl/combinational/$(DESIGN).v rtl/sequential/$(DESIGN).v 2>/dev/null; hierarchy -check -top $(DESIGN); proc; opt; show -format dot -prefix schematic $(DESIGN)" 2>/dev/null || \
+	$(YOSYS) -Q -p "read_verilog rtl/combinational/$(DESIGN).v; hierarchy -check -top $(DESIGN); proc; opt; show -format dot -prefix schematic $(DESIGN)"
 	$(XDOT) $(SCHEMATIC)
 
 clean:

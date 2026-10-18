@@ -78,7 +78,7 @@ def series(samples: list[tuple[int, int]], t_end: int):
 def main():
     root = Path(__file__).resolve().parents[1]
     vcd = root / "gcd_waveform.vcd"
-    out = root / "design" / "GCD" / "reports" / "gcd_simulation_snapshot.png"
+    out = root / "reports" / "gcd_simulation_snapshot.png"
     out.parent.mkdir(parents=True, exist_ok=True)
 
     if not vcd.exists():

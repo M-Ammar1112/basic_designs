@@ -12,7 +12,7 @@ echo " ADD4 CASCADE SYNTHESIS"
 echo "========================================"
 
 yosys -Q -l reports/add4_cascade.log -p "
-read_verilog design/add4_cascade.v;
+read_verilog rtl/combinational/add4_cascade.v;
 hierarchy -check -top add4_cascade;
 synth_xilinx -family xc7 -top add4_cascade;
 stat;
@@ -27,7 +27,7 @@ echo " ADD4 BALANCED SYNTHESIS"
 echo "========================================"
 
 yosys -Q -l reports/add4_balanced.log -p "
-read_verilog design/add4_balanced.v;
+read_verilog rtl/combinational/add4_balanced.v;
 hierarchy -check -top add4_balanced;
 synth_xilinx -family xc7 -top add4_balanced;
 stat;
@@ -42,7 +42,7 @@ echo " MAX3 CASCADE SYNTHESIS"
 echo "========================================"
 
 yosys -Q -l reports/max3_cascade.log -p "
-read_verilog design/max3_cascade.v;
+read_verilog rtl/combinational/max3_cascade.v;
 hierarchy -check -top max3_cascade;
 synth_xilinx -family xc7 -top max3_cascade;
 stat;
@@ -57,7 +57,7 @@ echo " MAX3 BALANCED SYNTHESIS"
 echo "========================================"
 
 yosys -Q -l reports/max3_balanced.log -p "
-read_verilog design/max3_balanced.v;
+read_verilog rtl/combinational/max3_balanced.v;
 hierarchy -check -top max3_balanced;
 synth_xilinx -family xc7 -top max3_balanced;
 stat;
@@ -72,7 +72,7 @@ echo " LEFT SHIFTER SYNTHESIS"
 echo "========================================"
 
 yosys -Q -l reports/left_shifter.log -p "
-read_verilog design/left_shifter.v;
+read_verilog rtl/sequential/left_shifter.v;
 hierarchy -check -top left_shifter;
 synth_xilinx -family xc7 -top left_shifter;
 stat;
@@ -87,7 +87,7 @@ echo " LEFT ROTATOR SYNTHESIS"
 echo "========================================"
 
 yosys -Q -l reports/left_rotator.log -p "
-read_verilog design/left_rotator.v;
+read_verilog rtl/combinational/left_rotator.v;
 hierarchy -check -top left_rotator;
 synth_xilinx -family xc7 -top left_rotator;
 stat;
@@ -102,7 +102,7 @@ echo " VARIABLE LEFT SHIFTER SYNTHESIS"
 echo "========================================"
 
 yosys -Q -l reports/left_shifter_variable.log -p "
-read_verilog design/left_shifter_variable.v;
+read_verilog rtl/sequential/left_shifter_variable.v;
 hierarchy -check -top left_shifter_variable;
 synth_xilinx -family xc7 -top left_shifter_variable;
 stat;
@@ -117,7 +117,7 @@ echo " VARIABLE LEFT ROTATOR SYNTHESIS"
 echo "========================================"
 
 yosys -Q -l reports/left_rotator_variable.log -p "
-read_verilog design/left_rotator_variable.v;
+read_verilog rtl/combinational/left_rotator_variable.v;
 hierarchy -check -top left_rotator_variable;
 synth_xilinx -family xc7 -top left_rotator_variable;
 stat;
@@ -132,7 +132,7 @@ echo " REGISTER FILE SYNTHESIS"
 echo "========================================"
 
 yosys -Q -l reports/register_file.log -p "
-read_verilog design/register_file.v;
+read_verilog rtl/combinational/register_file.v;
 hierarchy -check -top register_file;
 synth_xilinx -family xc7 -top register_file;
 stat;
@@ -147,7 +147,7 @@ echo " RV32I CORE SYNTHESIS"
 echo "========================================"
 
 yosys -Q -l reports/rv32i_core.log -p "
-read_verilog design/RV32I/*.v design/register_file.v;
+read_verilog rtl/RV32I/*.v rtl/combinational/register_file.v;
 hierarchy -check -top rv32i_core;
 synth_xilinx -family xc7 -top rv32i_core;
 stat;
@@ -162,7 +162,7 @@ echo " RV32I SYNTHESIS COMPLETED"
 echo "========================================"
 echo ""
 echo "GCD CONTROLLER/DATAPATH SYNTHESIS"
-yosys -Q -l reports/gcd_fsm.log -p "read_verilog design/gcd_datapath.v design/gcd_controller.v design/gcd_top.v; hierarchy -check -top gcd_top; proc; opt -nosdff -nodffe; fsm; fsm_info; stat; synth_xilinx -family xc7 -top gcd_top; stat; ltp; write_json netlist/gcd_top.json"
+yosys -Q -l reports/gcd_fsm.log -p "read_verilog rtl/sequential/gcd_datapath.v rtl/sequential/gcd_controller.v rtl/sequential/gcd_top.v; hierarchy -check -top gcd_top; proc; opt -nosdff -nodffe; fsm; fsm_info; stat; synth_xilinx -family xc7 -top gcd_top; stat; ltp; write_json netlist/gcd_top.json"
 echo "ALL SYNTHESIS COMPLETED"
 echo "Logs:"
 echo "reports/add4_cascade.log"
@@ -176,4 +176,3 @@ echo "reports/left_rotator_variable.log"
 echo "reports/register_file.log"
 echo "reports/rv32i_core.log"
 echo "reports/gcd_fsm.log"
-echo ""
