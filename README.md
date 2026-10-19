@@ -40,6 +40,7 @@ rtl/RV32I/          RV32I core RTL
 verif/tb/        Simulation testbenches
 verif/tb/RV32I/  RV32I-specific testbenches
 emulation/       Quartus TCL emulation (FPGA synthesis) scripts and projects
+pd/              Physical Design (ASIC flow using OpenLane 2 configuration and runner)
 scripts/         Python scripts (waveform plotting, etc.)
 tests/RV32I/     RV32I assembly tests and instruction images
 Makefile         Build, simulation, synthesis, and cleanup targets
@@ -172,7 +173,29 @@ In the GUI you can then:
 
 For waveform viewing, open the simulation VCD (`waveform.vcd`, `gcd_waveform.vcd`, or `sync_waveform.vcd`) in GTKWave after running the matching simulation target. A Python snapshot plotter for the GCD waveform is also available in `scripts/plot_gcd_waveform.py`.
 
-## Synthesis
+## OpenLane ASIC Physical Design (pd/)
+
+The `pd/` folder contains configurations and automation scripts for running ASIC physical design synthesis and hardening using **OpenLane 2**.
+
+### Structure
+- `pd/run_openlane.sh` — Helper script that runs OpenLane 2 inside the configured `OPENLANE_PATH` environment using Nix development flakes.
+- `pd/<design>/config.json` — Per-design configuration files specifying design name, Verilog source files, clock period, PDK (`sky130A`), and standard cell library (`sky130_fd_sc_hd`).
+
+### Running OpenLane ASIC Flow
+To run OpenLane for a specific design (e.g., `gcd_top` or `sync_hi_to_lo`):
+
+```bash
+./pd/run_openlane.sh gcd_top
+```
+
+Or via Make:
+
+```bash
+make gcd-openlane
+make sync-openlane
+```
+
+Ensure `OPENLANE_PATH` environment variable is set (defaults to `$HOME/projects/opensource/openlane2` if not set).
 
 Run the complete Yosys synthesis flow with:
 

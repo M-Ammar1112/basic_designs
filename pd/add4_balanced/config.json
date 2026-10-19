@@ -1,0 +1,7 @@
+{
+    "DESIGN_NAME": "add4_balanced",
+    "VERILOG_FILES": "dir::../../rtl/combinational/add4_balanced.v",
+    "PDK": "sky130A",
+    "STD_CELL_LIBRARY": "sky130_fd_sc_hd",
+    "FP_CORE_UTIL": 30
+}

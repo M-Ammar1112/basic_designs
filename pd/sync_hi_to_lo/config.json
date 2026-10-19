@@ -1,0 +1,9 @@
+{
+    "DESIGN_NAME": "sync_hi_to_lo",
+    "VERILOG_FILES": "dir::../../rtl/sequential/sync_hi_to_lo.v",
+    "CLOCK_PERIOD": 10.0,
+    "CLOCK_PORT": "clk_lo",
+    "PDK": "sky130A",
+    "STD_CELL_LIBRARY": "sky130_fd_sc_hd",
+    "FP_CORE_UTIL": 30
+}

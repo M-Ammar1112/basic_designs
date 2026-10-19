@@ -51,3 +51,4 @@ schematic.svg
 .vscode/
 *.swp
 *~
+**/runs/

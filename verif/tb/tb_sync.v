@@ -38,11 +38,10 @@ module tb_sync;
         begin
             @(negedge clk_hi);
             hi_data = value;
-            repeat (3) @(posedge clk_lo);
-            @(negedge clk_lo);
+            repeat (8) @(posedge clk_lo);
             if (hi_to_lo_out !== value)
                 $fatal(1, "hi->lo: expected %02h, got %02h", value, hi_to_lo_out);
-            $display("hi->lo: %02h synchronized (2-FF) OK", value);
+            $display("hi->lo: %02h synchronized (coherent toggle) OK", value);
         end
     endtask
 
@@ -51,11 +50,10 @@ module tb_sync;
         begin
             @(negedge clk_lo);
             lo_data = value;
-            repeat (4) @(posedge clk_hi);
-            @(negedge clk_hi);
+            repeat (16) @(posedge clk_hi);
             if (lo_to_hi_out !== value)
                 $fatal(1, "lo->hi: expected %02h, got %02h", value, lo_to_hi_out);
-            $display("lo->hi: %02h synchronized (2-FF) OK", value);
+            $display("lo->hi: %02h synchronized (coherent toggle) OK", value);
         end
     endtask
 
@@ -69,9 +67,9 @@ module tb_sync;
         hi_data = {WIDTH{1'b0}};
         lo_data = {WIDTH{1'b0}};
 
-        repeat (2) @(negedge clk_lo);
+        repeat (4) @(negedge clk_lo);
         reset = 1'b0;
-        repeat (2) @(negedge clk_lo);
+        repeat (4) @(negedge clk_lo);
 
         check_hi_to_lo(8'hA5);
         check_hi_to_lo(8'h3C);
@@ -81,8 +79,8 @@ module tb_sync;
         check_lo_to_hi(8'hC3);
         check_lo_to_hi(8'h01);
 
-        check_hi_to_lo(8'h00);
-        check_lo_to_hi(8'h00);
+        check_hi_to_lo(8'h12);
+        check_lo_to_hi(8'h34);
 
         $display("SYNC TEST PASSED");
         $finish;

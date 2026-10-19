@@ -19,27 +19,29 @@ RTL_SEQUENTIAL := $(wildcard rtl/sequential/*.v)
 RTL_RV32I := $(wildcard rtl/RV32I/*.v)
 ALL_RTL := $(RTL_COMBINATIONAL) $(RTL_SEQUENTIAL) $(RTL_RV32I)
 
-.PHONY: all help tb-build tb-run sim rv32i-build rv32i-run rv32i-asm rv32i-coverage-build rv32i-coverage-run rv32i-coverage-asm gcd-build gcd-run gcd-synth sync-build sync-run quartus gcd-quartus sync-quartus synth schematic clean distclean
+.PHONY: all help tb-build tb-run sim rv32i-build rv32i-run rv32i-asm rv32i-coverage-build rv32i-coverage-run rv32i-coverage-asm gcd-build gcd-run gcd-synth sync-build sync-run quartus gcd-quartus sync-quartus openlane gcd-openlane sync-openlane synth schematic clean distclean
 
 all: tb-run rv32i-run sync-run synth
 
 help:
 	@printf '%s\n' \
-		'make tb-build  Compile the comparison testbench' \
-		'make tb-run    Compile and run the comparison testbench' \
-		'make rv32i-run Compile and run the RV32I core test' \
-		'make rv32i-asm Compile tests/RV32I/*.S (requires RISC-V tools)' \
+		'make tb-build      Compile the comparison testbench' \
+		'make tb-run        Compile and run the comparison testbench' \
+		'make rv32i-run     Compile and run the RV32I core test' \
+		'make rv32i-asm     Compile tests/RV32I/*.S (requires RISC-V tools)' \
 		'make rv32i-coverage-run Run the broader RV32I coverage test' \
-		'make gcd-run     Compile and run the GCD controller/datapath test' \
-		'make gcd-synth   Synthesize GCD with Yosys and report its FSM' \
-		'make sync-run    Compile and run the clock-domain synchronizer test' \
-		'make gcd-quartus  Emulate GCD with Quartus (emulation/ script)' \
-		'make sync-quartus Emulate both clock-domain synchronizers with Quartus' \
-		'make synth      Synthesize all designs with Yosys' \
-		'make schematic View a design schematic (DESIGN=module)' \
-		'make all       Run all simulations and synthesis' \
-		'make clean     Remove simulation outputs' \
-		'make distclean Remove simulation and synthesis outputs'
+		'make gcd-run         Compile and run the GCD controller/datapath test' \
+		'make gcd-synth       Synthesize GCD with Yosys and report its FSM' \
+		'make sync-run        Compile and run the clock-domain synchronizer test' \
+		'make gcd-quartus     Emulate GCD with Quartus (emulation/ script)' \
+		'make sync-quartus    Emulate both synchronizers with Quartus' \
+		'make gcd-openlane    Run OpenLane ASIC flow for GCD (pd/ script)' \
+		'make sync-openlane   Run OpenLane ASIC flow for synchronizer' \
+		'make synth          Synthesize all designs with Yosys' \
+		'make schematic    View a design schematic (DESIGN=module)' \
+		'make all           Run all simulations and synthesis' \
+		'make clean         Remove simulation outputs' \
+		'make distclean     Remove simulation and synthesis outputs'
 
 tb-build: $(SIM)
 
@@ -103,6 +105,12 @@ gcd-quartus:
 sync-quartus:
 	cd emulation && $(QUARTUS_SH) -t synthesize_sync_hi_to_lo.tcl
 	cd emulation && $(QUARTUS_SH) -t synthesize_sync_lo_to_hi.tcl
+
+gcd-openlane:
+	./pd/run_openlane.sh gcd_top
+
+sync-openlane:
+	./pd/run_openlane.sh sync_hi_to_lo
 
 synth:
 	./run_all.sh
