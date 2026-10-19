@@ -24,6 +24,8 @@ schematic.svg
 **/dni/
 **/output_files/
 **/incremental_db/
+*.qpf
+*.qsf
 *.qws
 *.sof
 *.pof

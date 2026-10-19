@@ -6,6 +6,7 @@ SIM ?= simulation.out
 RV32I_SIM ?= rv32i_simulation.out
 RV32I_COVERAGE_SIM ?= rv32i_coverage_simulation.out
 GCD_SIM ?= gcd_simulation.out
+SYNC_SIM ?= sync_simulation.out
 RV32I_AS ?= clang
 RV32I_OBJCOPY ?= llvm-objcopy
 RV32I_LD ?= ld.lld
@@ -18,9 +19,9 @@ RTL_SEQUENTIAL := $(wildcard rtl/sequential/*.v)
 RTL_RV32I := $(wildcard rtl/RV32I/*.v)
 ALL_RTL := $(RTL_COMBINATIONAL) $(RTL_SEQUENTIAL) $(RTL_RV32I)
 
-.PHONY: all help tb-build tb-run sim rv32i-build rv32i-run rv32i-asm rv32i-coverage-build rv32i-coverage-run rv32i-coverage-asm gcd-build gcd-run gcd-synth gcd-quartus synth schematic clean distclean
+.PHONY: all help tb-build tb-run sim rv32i-build rv32i-run rv32i-asm rv32i-coverage-build rv32i-coverage-run rv32i-coverage-asm gcd-build gcd-run gcd-synth sync-build sync-run quartus gcd-quartus sync-quartus synth schematic clean distclean
 
-all: tb-run rv32i-run synth
+all: tb-run rv32i-run sync-run synth
 
 help:
 	@printf '%s\n' \
@@ -31,10 +32,12 @@ help:
 		'make rv32i-coverage-run Run the broader RV32I coverage test' \
 		'make gcd-run     Compile and run the GCD controller/datapath test' \
 		'make gcd-synth   Synthesize GCD with Yosys and report its FSM' \
-		'make gcd-quartus Synthesize GCD with Quartus (pd/ script)' \
+		'make sync-run    Compile and run the clock-domain synchronizer test' \
+		'make gcd-quartus  Emulate GCD with Quartus (emulation/ script)' \
+		'make sync-quartus Emulate both clock-domain synchronizers with Quartus' \
 		'make synth      Synthesize all designs with Yosys' \
 		'make schematic View a design schematic (DESIGN=module)' \
-		'make all       Run both simulations and synthesis' \
+		'make all       Run all simulations and synthesis' \
 		'make clean     Remove simulation outputs' \
 		'make distclean Remove simulation and synthesis outputs'
 
@@ -84,8 +87,22 @@ gcd-synth:
 	mkdir -p reports netlist
 	$(YOSYS) -Q -l reports/gcd_fsm.log -p "read_verilog rtl/sequential/gcd_datapath.v rtl/sequential/gcd_controller.v rtl/sequential/gcd_top.v; hierarchy -check -top gcd_top; proc; opt -nosdff -nodffe; fsm; fsm_info; stat; synth_xilinx -family xc7 -top gcd_top; stat; write_json netlist/gcd_top.json"
 
+sync-build: $(SYNC_SIM)
+
+$(SYNC_SIM): rtl/sequential/sync_hi_to_lo.v rtl/sequential/sync_lo_to_hi.v verif/tb/tb_sync.v
+	$(IVERILOG) -g2012 -s tb_sync -o $@ verif/tb/tb_sync.v rtl/sequential/sync_hi_to_lo.v rtl/sequential/sync_lo_to_hi.v
+
+sync-run: sync-build
+	$(VVP) $(SYNC_SIM)
+
+quartus: gcd-quartus sync-quartus
+
 gcd-quartus:
-	cd pd && $(QUARTUS_SH) -t synthesize_gcd.tcl
+	cd emulation && $(QUARTUS_SH) -t synthesize_gcd.tcl
+
+sync-quartus:
+	cd emulation && $(QUARTUS_SH) -t synthesize_sync_hi_to_lo.tcl
+	cd emulation && $(QUARTUS_SH) -t synthesize_sync_lo_to_hi.tcl
 
 synth:
 	./run_all.sh
@@ -97,7 +114,7 @@ schematic:
 	$(XDOT) $(SCHEMATIC)
 
 clean:
-	rm -f $(SIM) $(RV32I_SIM) $(RV32I_COVERAGE_SIM) $(GCD_SIM) waveform.vcd gcd_waveform.vcd abc.history tb.out $(SCHEMATIC) tests/RV32I/basic.o tests/RV32I/basic.elf tests/RV32I/basic.bin tests/RV32I/coverage.o tests/RV32I/coverage.elf tests/RV32I/coverage.bin
+	rm -f $(SIM) $(RV32I_SIM) $(RV32I_COVERAGE_SIM) $(GCD_SIM) $(SYNC_SIM) waveform.vcd gcd_waveform.vcd sync_waveform.vcd abc.history tb.out $(SCHEMATIC) tests/RV32I/basic.o tests/RV32I/basic.elf tests/RV32I/basic.bin tests/RV32I/coverage.o tests/RV32I/coverage.elf tests/RV32I/coverage.bin
 
 distclean: clean
 	rm -rf netlist reports

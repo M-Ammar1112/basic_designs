@@ -19,6 +19,8 @@ The current synthesis flow targets Yosys with Xilinx 7-series technology mapping
 | RV32I register file | `register_file` | 32 registers of 32 bits with two asynchronous read ports, one synchronous write port, and a hardwired zero register. |
 | RV32I core | `rv32i_core` | Single-cycle RV32I integer core with instruction fetch, register, ALU, branch, jump, load, and store datapaths. |
 | GCD calculator | `gcd_top` | Iterative Euclidean GCD calculator with a 6-bit datapath and separately synthesized controller FSM. |
+| Fast-to-slow synchronizer | `sync_hi_to_lo` | Two-flop synchronizer that samples a multibit signal from a fast clock domain into a slow clock domain. |
+| Slow-to-fast synchronizer | `sync_lo_to_hi` | Two-flop synchronizer that samples a multibit signal from a slow clock domain into a fast clock domain. |
 
 The two implementations of each adder and maximum function provide a simple basis for comparing RTL structure, synthesized logic, timing, and resource usage. The shifter and rotator designs demonstrate common fixed-width bit-manipulation building blocks.
 
@@ -26,16 +28,18 @@ The variable shifter and rotator accept `shamt[2:0]`, so they support shift or r
 
 The `register_file` module follows the standard RV32I register-file organization. `rs1` and `rs2` select the two combinational read ports, while `rd`, `write_data`, and `reg_write` control a write on the rising edge of `clk`. Register `x0` always reads as zero and ignores writes.
 
+The `sync_hi_to_lo` and `sync_lo_to_hi` modules are clock-domain crossing (CDC) synchronizers. Each takes a source clock and a destination clock, a multibit `data_in`, and produces a `data_out` retimed into the destination domain through two flip-flops. `sync_hi_to_lo` captures data from a fast clock into a slow clock, while `sync_lo_to_hi` captures data from a slow clock into a fast clock. Both share the same two-flop structure and are parameterized by `WIDTH`.
+
 ## Repository Layout
 
 ```text
 rtl/             Synthesizable Verilog RTL modules
 rtl/combinational/  Combinational designs (adders, max, rotators, regfile)
-rtl/sequential/     Sequential designs (GCD, shifters)
+rtl/sequential/     Sequential designs (GCD, shifters, clock-domain synchronizers)
 rtl/RV32I/          RV32I core RTL
 verif/tb/        Simulation testbenches
 verif/tb/RV32I/  RV32I-specific testbenches
-pd/              Quartus TCL synthesis scripts
+emulation/       Quartus TCL emulation (FPGA synthesis) scripts and projects
 scripts/         Python scripts (waveform plotting, etc.)
 tests/RV32I/     RV32I assembly tests and instruction images
 Makefile         Build, simulation, synthesis, and cleanup targets
@@ -50,6 +54,7 @@ reports/         Generated synthesis reports, ignored by Git
 - `xdot` and Graphviz for schematic viewing
 - Icarus Verilog and its `vvp` runtime
 - GNU Make
+- Quartus (with `quartus_sh` and `quartus`) for the FPGA emulation flow
 - Clang with RISC-V support, LLVM `ld.lld`, and `llvm-objcopy` for assembling the included RV32I tests, or a compatible RISC-V toolchain
 - A shell environment capable of running the synthesis script
 
@@ -106,22 +111,66 @@ Run its directed testbench with:
 make gcd-run
 ```
 
-The test covers `(56, 48)`, `(24, 24)`, and `(39, 52)` and writes `gcd_waveform.vcd` for waveform inspection. Synthesize with Yosys via `make gcd-synth` (FSM log in `reports/gcd_fsm.log`), or with Quartus via `make gcd-quartus` / `pd/synthesize_gcd.tcl`.
+The test covers `(56, 48)`, `(24, 24)`, and `(39, 52)` and writes `gcd_waveform.vcd` for waveform inspection. Synthesize with Yosys via `make gcd-synth` (FSM log in `reports/gcd_fsm.log`), or with Quartus via `make gcd-quartus` / `emulation/synthesize_gcd.tcl`.
 
-## Quartus Synthesis
+## Clock-Domain Synchronizers
 
-For each basic RTL design, a Quartus TCL synthesis script is available in `pd/`. To synthesize a design:
+The two CDC synchronizers live in `rtl/sequential/sync_hi_to_lo.v` and `rtl/sequential/sync_lo_to_hi.v`. Each module has these ports:
+
+| Port | Direction | Description |
+| --- | --- | --- |
+| `clk_hi` | input | High-frequency (fast) clock. |
+| `clk_lo` | input | Low-frequency (slow) clock. |
+| `reset` | input | Asynchronous active-high reset. |
+| `data_in[WIDTH-1:0]` | input | Multibit signal in the source domain. |
+| `data_out[WIDTH-1:0]` | output | Signal retimed into the destination domain. |
+
+`sync_hi_to_lo` samples `data_in` (driven by `clk_hi`) on `clk_lo`, so the output settles two `clk_lo` edges after a change. `sync_lo_to_hi` samples `data_in` (driven by `clk_lo`) on `clk_hi`, so the output settles two `clk_hi` edges after a change.
+
+Run the combined testbench with:
 
 ```bash
-cd pd/
+make sync-run
+```
+
+The testbench drives a 100 MHz `clk_hi` and a 25 MHz `clk_lo`, checks that each synchronizer forwards directed patterns after the two-flop latency, and writes `sync_waveform.vcd` for waveform inspection.
+
+## Quartus Emulation (FPGA Synthesis)
+
+Quartus is used to emulate and synthesize each basic design for an FPGA board (Agilex 5, device `A5EA005BB15AE4S`); no ASIC flow is targeted. A dedicated TCL script for every standalone design is provided in `emulation/`.
+
+To emulate a single design:
+
+```bash
+cd emulation/
 quartus_sh -t synthesize_<design>.tcl
 ```
 
-Replace `<design>` with the module name (e.g., `add4_balanced`). After synthesis, open the generated project in the Quartus GUI to view netlists, resources, and timing reports:
+Replace `<design>` with the module name (e.g., `add4_balanced`, `sync_hi_to_lo`). Each script creates the Quartus project, points it at the matching RTL file under `rtl/`, and runs Analysis & Synthesis.
+
+Convenience Make targets are also available from the repository root:
 
 ```bash
+make gcd-quartus   # Emulate the GCD design
+make sync-quartus  # Emulate both clock-domain synchronizers
+```
+
+### Viewing results and waveforms
+
+Synthesis writes the compilation database and reports to `emulation/output_files/`. To inspect netlists, resource usage, and timing, open the generated project in the Quartus GUI:
+
+```bash
+cd emulation/
 quartus <design>.qpf
 ```
+
+In the GUI you can then:
+
+- Open **Tools -> Netlist Viewers -> RTL Viewer** to inspect the synthesized netlist.
+- Open **Tools -> Netlist Viewers -> State Machine Viewer** for state machines (for example, the GCD controller).
+- Read **Compilation Report -> Analysis & Synthesis** for resource utilization.
+
+For waveform viewing, open the simulation VCD (`waveform.vcd`, `gcd_waveform.vcd`, or `sync_waveform.vcd`) in GTKWave after running the matching simulation target. A Python snapshot plotter for the GCD waveform is also available in `scripts/plot_gcd_waveform.py`.
 
 ## Synthesis
 
@@ -148,7 +197,8 @@ The `DESIGN` value must match a Verilog filename in `rtl/combinational/` or `rtl
 
 ```bash
 make help       # List available targets
-make all        # Run simulation and synthesis
+make all        # Run all simulations and synthesis
+make sync-run   # Run the clock-domain synchronizer testbench
 make clean      # Remove simulation outputs
 make distclean  # Remove simulation and synthesis outputs
 ```
