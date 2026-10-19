@@ -108,6 +108,21 @@ make gcd-run
 
 The test covers `(56, 48)`, `(24, 24)`, and `(39, 52)` and writes `gcd_waveform.vcd` for waveform inspection. Synthesize with Yosys via `make gcd-synth` (FSM log in `reports/gcd_fsm.log`), or with Quartus via `make gcd-quartus` / `pd/synthesize_gcd.tcl`.
 
+## Quartus Synthesis
+
+For each basic RTL design, a Quartus TCL synthesis script is available in `pd/`. To synthesize a design:
+
+```bash
+cd pd/
+quartus_sh -t synthesize_<design>.tcl
+```
+
+Replace `<design>` with the module name (e.g., `add4_balanced`). After synthesis, open the generated project in the Quartus GUI to view netlists, resources, and timing reports:
+
+```bash
+quartus <design>.qpf
+```
+
 ## Synthesis
 
 Run the complete Yosys synthesis flow with:
